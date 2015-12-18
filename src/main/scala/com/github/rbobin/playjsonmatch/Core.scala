@@ -4,19 +4,25 @@ import play.api.libs.json._
 
 object Core {
 
+  val PATTERN = "^\\#\\[(.*)\\]$".r
+
   def matches(pattern: JsValue, actual: JsValue): Boolean =
     compareJsValues(pattern, Some(actual)) match {
       case Nil => true
       case _: List[_] => throw new RuntimeException() // TODO descriptive error message
     }
 
-  private def missingElementError: List[String] = ???
+  private def missingElementError: Seq[String] = ???
 
-  private def typeMismatchError: List[String] = ???
+  private def typeMismatchError: Seq[String] = ???
 
-  private def arraysDifferentSizeError: List[String] = ???
+  private def arraysDifferentSizeError: Seq[String] = ???
 
-  private def compareJsValues(pattern: JsValue, actual: Option[JsValue]): Seq[String] = pattern match {
+  private def objectSupersetError(keys: Set[String]): Seq[String] = ???
+
+  private def equalityError: Seq[String] = ???
+
+  private def compareJsValues(expected: JsValue, actual: Option[JsValue]): Seq[String] = expected match {
     case x: JsArray => compareJsArrays(x, actual)
     case x: JsObject => compareJsObjects(x, actual)
     case x: JsString => compareJsStrings(x, actual)
@@ -25,9 +31,9 @@ object Core {
     case JsNull => compareJsNull(actual)
   }
 
-  private def compareJsArrays(pattern: JsArray, maybeActual: Option[JsValue]): Seq[String] = maybeActual match {
-    case Some(actual: JsArray) if pattern.value.size != actual.value.size => arraysDifferentSizeError
-    case Some(actual: JsArray) => (pattern.value, actual.value)
+  private def compareJsArrays(expected: JsArray, maybeActual: Option[JsValue]): Seq[String] = maybeActual match {
+    case Some(actual: JsArray) if expected.value.size != actual.value.size => arraysDifferentSizeError
+    case Some(actual: JsArray) => (expected.value, actual.value)
       .zipped
       .flatMap { (patternElement, actualElement) =>
         compareJsValues(patternElement, Some(actualElement))
@@ -36,55 +42,57 @@ object Core {
     case None => missingElementError
   }
 
-  private def compareJsObjects(pattern: JsObject, actual: Option[JsValue]): Seq[String] = actual match {
-    case Some(x: JsObject) =>
-      def compareIntersection: Seq[String] = Seq()[String]
-      def compareSubset: Seq[String] = Seq()[String]
-      def compareSuperset: Seq[String] = Seq()[String]
+  private def compareJsObjects(expected: JsObject, maybeActual: Option[JsValue]): Seq[String] = maybeActual match {
+    case Some(actual: JsObject) =>
+      def compareIntersection: Seq[String] = expected
+        .keys
+        .intersect(actual.keys)
+        .flatMap { (key: String) =>
+          compareJsValues(expected.value(key), actual.value.get(key))
+        }
+        .toSeq
+      def compareSubset: Seq[String] = expected
+        .keys
+        .diff(actual.keys)
+        .flatMap { (key: String) =>
+          compareJsValues(expected.value(key), None)
+        }
+        .toSeq
+      def compareSuperset: Seq[String] = objectSupersetError(actual.keys.diff(expected.keys).toSet)
 
       compareIntersection ++ compareSubset ++ compareSuperset
     case Some(_) => typeMismatchError
     case None => missingElementError
   }
 
-  private def compareJsStrings(pattern: JsString, actual: Option[JsValue]): List[String] = pattern.value match {
-    case "*" => actual match {
-      case None => "Missing value" :: errors
-      case Some(y: JsString) => errors
-      case Some(_) => "Not a string" :: errors
-    }
-    case x => actual match {
-      case None => "Missing string" :: errors
-      case Some(y: JsString) => if (x != y.value)
-        "String not equal" :: errors
-      else
-        errors
-      case Some(_) => "Not a string" :: errors
+  private def compareJsStrings(expected: JsString, maybeActual: Option[JsValue]): Seq[String] = expected.value match {
+    case PATTERN(pattern) => ???
+    case _ => maybeActual match {
+      case Some(actual: JsString) if expected.value != actual.value => equalityError
+      case Some(actual: JsString) => Nil
+      case Some(_) => typeMismatchError
+      case None => missingElementError
     }
   }
 
-  private def compareJsNumbers(pattern: JsNumber, actual: Option[JsValue]): List[String] = actual match {
-    case None => "Missing number" :: errors
-    case Some(x: JsNumber) => if (pattern != x)
-      "Numbers not equal" :: errors
-    else
-      errors
-    case Some(_) => "Not a number" :: errors
+  private def compareJsNumbers(expected: JsNumber, maybeActual: Option[JsValue]): Seq[String] = maybeActual match {
+    case Some(actual: JsNumber) if expected.value != actual.value => equalityError
+    case Some(actual: JsNumber) => Nil
+    case Some(_) => typeMismatchError
+    case None => missingElementError
   }
 
-  private def compareJsBoolean(pattern: JsBoolean, actual: Option[JsValue]): List[String] = actual match {
-    case None => "Missing boolean" :: errors
-    case Some(x: JsBoolean) => if (pattern != x)
-      "Boolean not equal" :: errors
-    else
-      errors
-    case Some(_) => "Not a boolean" :: errors
+  private def compareJsBoolean(expected: JsBoolean, maybeActual: Option[JsValue]): Seq[String] = maybeActual match {
+    case Some(actual: JsBoolean) if expected.value != actual.value => equalityError
+    case Some(actual: JsBoolean) => Nil
+    case Some(_) => typeMismatchError
+    case None => missingElementError
   }
 
-  private def compareJsNull(actual: Option[JsValue]): List[String] = actual match {
-    case Some(JsNull) => errors
-    case Some(_) => "Not a null" :: errors
-    case None => "Missing null" :: errors
+  private def compareJsNull(maybeActual: Option[JsValue]): Seq[String] = maybeActual match {
+    case Some(JsNull) => Nil
+    case Some(_) => typeMismatchError
+    case None => missingElementError
   }
 
 }
