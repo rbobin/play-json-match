@@ -1,10 +1,17 @@
 package com.github.rbobin.playjsonmatch
 
 import play.api.libs.json._
+import com.github.rbobin.playjsonmatch.Errors._
 
 object Core {
 
-  val PATTERN = "^\\#\\[(.*)\\]$".r
+  val PATTERN = (
+    "^" +        // Start of string
+      "\\#\\[" + // Start of pattern
+      "(.*)" +   // Capturing group
+      "\\]" +    // End of pattern
+      "$"        // End of string
+    ).r
 
   def matches(pattern: JsValue, actual: JsValue): Boolean =
     compareJsValues(pattern, Some(actual)) match {
@@ -12,23 +19,13 @@ object Core {
       case _: List[_] => throw new RuntimeException() // TODO descriptive error message
     }
 
-  private def missingElementError: Seq[String] = ???
-
-  private def typeMismatchError: Seq[String] = ???
-
-  private def arraysDifferentSizeError: Seq[String] = ???
-
-  private def objectSupersetError(keys: Set[String]): Seq[String] = ???
-
-  private def equalityError: Seq[String] = ???
-
-  private def compareJsValues(expected: JsValue, actual: Option[JsValue]): Seq[String] = expected match {
-    case x: JsArray => compareJsArrays(x, actual)
-    case x: JsObject => compareJsObjects(x, actual)
-    case x: JsString => compareJsStrings(x, actual)
-    case x: JsNumber => compareJsNumbers(x, actual)
-    case x: JsBoolean => compareJsBoolean(x, actual)
-    case JsNull => compareJsNull(actual)
+  private def compareJsValues(expected: JsValue, maybeActual: Option[JsValue]): Seq[String] = expected match {
+    case x: JsArray => compareJsArrays(x, maybeActual)
+    case x: JsObject => compareJsObjects(x, maybeActual)
+    case x: JsString => compareJsStrings(x, maybeActual)
+    case x: JsNumber => compareJsNumbers(x, maybeActual)
+    case x: JsBoolean => compareJsBoolean(x, maybeActual)
+    case JsNull => compareJsNull(maybeActual)
   }
 
   private def compareJsArrays(expected: JsArray, maybeActual: Option[JsValue]): Seq[String] = maybeActual match {
@@ -94,5 +91,4 @@ object Core {
     case Some(_) => typeMismatchError
     case None => missingElementError
   }
-
 }
