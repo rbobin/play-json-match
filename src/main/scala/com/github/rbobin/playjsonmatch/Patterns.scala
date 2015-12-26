@@ -6,10 +6,10 @@ import scala.util.matching.Regex
 
 
 object Matcher {
-  val patterns: Seq[Pattern] = Seq(StringPattern)
+  val patterns: Seq[JsonPattern] = Seq(Anything)
 
-  def processPattern(pattern: String, jsValue: JsValue): Seq[String] = {
-    val patternsMap: Map[String, Option[Pattern]] = pattern
+  def processPattern(pattern: String, maybeJsValue: Option[JsValue]): Seq[String] = {
+    val patternsMap: Map[String, Option[JsonPattern]] = pattern
       .split('|')
       .map { patternPiece =>
         (patternPiece, patterns.find(p => p.check(patternPiece)))
@@ -20,7 +20,7 @@ object Matcher {
 
     if (unmatchedStrings.nonEmpty) return unmatchedStrings.map ( string => s"Invalid pattern: $string")
 
-    val matchResults = patternsMap.toSeq.map( tuple => tuple._2.get.tryMatch(tuple._1, jsValue))
+    val matchResults = patternsMap.toSeq.map( tuple => tuple._2.get.tryMatch(tuple._1, maybeJsValue))
 
     if (matchResults.exists(_.isEmpty)) return Nil
 
@@ -28,18 +28,21 @@ object Matcher {
   }
 }
 
-trait Pattern {
-  def pattern: Regex
+trait JsonPattern {
 
   def check(pattern: String): Boolean
 
-  def tryMatch(pattern: String, jsValue: JsValue): Option[String]
+  def tryMatch(pattern: String, maybeJsValue: Option[JsValue]): Option[String]
 }
 
-object StringPattern extends Pattern {
-  val pattern = "something".r
+object Anything extends JsonPattern {
 
-  override def check(pattern: String): Boolean = ???
+  val PATTERN = "*"
 
-  override def tryMatch(pattern: String, jsValue: JsValue): Option[String] = ???
+  override def check(pattern: String): Boolean = pattern == PATTERN
+
+  override def tryMatch(pattern: String, maybeJsValue: Option[JsValue]): Option[String] = maybeJsValue match {
+    case None => Some("Expected any element, found none")
+    case _ => None
+  }
 }
