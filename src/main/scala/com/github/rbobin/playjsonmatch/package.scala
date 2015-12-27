@@ -5,4 +5,5 @@ package object playjsonmatch {
   type Errors = Seq[String]
   type JsPath = Seq[String]
 
+  val NO_ERRORS = Nil
 }

@@ -21,7 +21,7 @@ object Matcher {
 
     val matchResults = patternsMap.toSeq.map( tuple => tuple._2.get.tryMatch(tuple._1, maybeJsValue))
 
-    if (matchResults.exists(_.isEmpty)) return Nil
+    if (matchResults.exists(_.isEmpty)) return NO_ERRORS
 
     matchResults.filter(_.nonEmpty).map(errorMessage => s"Pattern did not matched: ${errorMessage.get}")
   }
