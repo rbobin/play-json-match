@@ -37,8 +37,8 @@ object Core {
         .flatMap { (patternElement, actualElement, index) =>
           compareJsValues(patternElement, Some(actualElement), path :+ s"[$index]")
         }
-      case Some(x) => typeMismatchError(JsArray.getClass, x.getClass, path)
-      case None => missingElementError(JsArray.getClass, path)
+      case Some(x) => typeMismatchError(ARRAY, x, path)
+      case None => missingElementError(ARRAY, path)
     }
 
   private def compareJsObjects(expected: JsObject, maybeActual: Option[JsValue], path: JsPath): Errors =
@@ -61,8 +61,8 @@ object Core {
         def compareSuperset: Errors = objectSupersetError(actual.keys.diff(expected.keys).toSeq, path)
 
         compareIntersection ++ compareSubset ++ compareSuperset
-      case Some(x) => typeMismatchError(JsObject.getClass, x.getClass, path)
-      case None => missingElementError(JsObject.getClass, path)
+      case Some(x) => typeMismatchError(OBJECT, x, path)
+      case None => missingElementError(OBJECT, path)
     }
 
   private def compareJsStrings(expected: JsString, maybeActual: Option[JsValue], path: JsPath): Errors =
@@ -70,35 +70,35 @@ object Core {
       case PATTERN(pattern) => ???
       case _ => maybeActual match {
         case Some(actual: JsString) if expected.value != actual.value =>
-          equalityError(expected.getClass, s"\'${expected.value}\'", s"\'${actual.value}\'", path)
+          equalityError(STRING, s"\'${expected.value}\'", s"\'${actual.value}\'", path)
         case Some(actual: JsString) => NO_ERRORS
-        case Some(x) => typeMismatchError(expected.getClass, x.getClass, path)
-        case None => missingElementError(expected.getClass, path)
+        case Some(x) => typeMismatchError(STRING, x, path)
+        case None => missingElementError(STRING, path)
       }
     }
 
   private def compareJsNumbers(expected: JsNumber, maybeActual: Option[JsValue], path: JsPath): Errors =
     maybeActual match {
       case Some(actual: JsNumber) if expected.value != actual.value =>
-        equalityError(expected.getClass, expected.value.toString(), actual.value.toString(), path)
+        equalityError(NUMBER, expected.value.toString(), actual.value.toString(), path)
       case Some(actual: JsNumber) => NO_ERRORS
-      case Some(x) => typeMismatchError(expected.getClass, x.getClass, path)
-      case None => missingElementError(expected.getClass, path)
+      case Some(x) => typeMismatchError(NUMBER, x, path)
+      case None => missingElementError(NUMBER, path)
     }
 
   private def compareJsBoolean(expected: JsBoolean, maybeActual: Option[JsValue], path: JsPath): Errors =
     maybeActual match {
       case Some(actual: JsBoolean) if expected.value != actual.value =>
-        equalityError(expected.getClass, expected.value.toString, actual.value.toString, path)
+        equalityError(BOOLEAN, expected.value.toString, actual.value.toString, path)
       case Some(actual: JsBoolean) => NO_ERRORS
-      case Some(x) => typeMismatchError(expected.getClass, x.getClass, path)
-      case None => missingElementError(expected.getClass, path)
+      case Some(x) => typeMismatchError(BOOLEAN, x, path)
+      case None => missingElementError(BOOLEAN, path)
     }
 
   private def compareJsNull(maybeActual: Option[JsValue], path: JsPath): Errors =
     maybeActual match {
       case Some(JsNull) => NO_ERRORS
-      case Some(x) => typeMismatchError(JsNull.getClass, x.getClass, path)
-      case None => missingElementError(JsNull.getClass, path)
+      case Some(x) => typeMismatchError(NULL, x, path)
+      case None => missingElementError(NULL, path)
     }
 }

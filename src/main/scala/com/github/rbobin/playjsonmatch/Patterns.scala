@@ -2,8 +2,6 @@ package com.github.rbobin.playjsonmatch
 
 import play.api.libs.json.JsValue
 
-
-
 object Matcher {
   val patterns: Seq[JsonPattern] = Seq(Anything)
 
