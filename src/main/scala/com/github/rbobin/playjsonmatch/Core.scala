@@ -35,7 +35,7 @@ object Core {
       case Some(actual: JsArray) => (expected.value, actual.value, expected.value.indices)
         .zipped
         .flatMap { (patternElement, actualElement, index) =>
-          compareJsValues(patternElement, Some(actualElement), path :+ s"/$index")
+          compareJsValues(patternElement, Some(actualElement), path :+ s"[$index]")
         }
       case Some(x) => typeMismatchError(JsArray.getClass, x.getClass, path)
       case None => missingElementError(JsArray.getClass, path)
@@ -47,17 +47,17 @@ object Core {
         .keys
         .intersect(actual.keys)
         .flatMap { (key: String) =>
-          compareJsValues(expected.value(key), actual.value.get(key), path :+ s"/$key")
+          compareJsValues(expected.value(key), actual.value.get(key), path :+ key)
         }
         .toSeq
       def compareSubset: Seq[String] = expected
         .keys
         .diff(actual.keys)
         .flatMap { (key: String) =>
-          compareJsValues(expected.value(key), None, path :+ s"/$key")
+          compareJsValues(expected.value(key), None, path :+ key)
         }
         .toSeq
-      def compareSuperset: Seq[String] = objectSupersetError(actual.keys.diff(expected.keys).toSet)
+      def compareSuperset: Seq[String] = objectSupersetError(actual.keys.diff(expected.keys).toSeq, path)
 
       compareIntersection ++ compareSubset ++ compareSuperset
     case Some(x) => typeMismatchError(JsObject.getClass, x.getClass, path)
@@ -69,7 +69,7 @@ object Core {
       case PATTERN(pattern) => ???
       case _ => maybeActual match {
         case Some(actual: JsString) if expected.value != actual.value =>
-          equalityError(expected.getClass, s"\"${expected.value}\"", s"\"${actual.value}\"", path)
+          equalityError(expected.getClass, s"\'${expected.value}\'", s"\'${actual.value}\'", path)
         case Some(actual: JsString) => Nil
         case Some(x) => typeMismatchError(expected.getClass, x.getClass, path)
         case None => missingElementError(expected.getClass, path)
