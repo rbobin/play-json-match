@@ -2,13 +2,12 @@ package com.github.rbobin.playjsonmatch
 
 import play.api.libs.json.JsValue
 
-import scala.util.matching.Regex
 
 
 object Matcher {
   val patterns: Seq[JsonPattern] = Seq(Anything)
 
-  def processPattern(pattern: String, maybeJsValue: Option[JsValue]): Seq[String] = {
+  def processPattern(pattern: String, maybeJsValue: Option[JsValue], path: JsPath): Errors = {
     val patternsMap: Map[String, Option[JsonPattern]] = pattern
       .split('|')
       .map { patternPiece =>

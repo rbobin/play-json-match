@@ -19,7 +19,7 @@ object Core {
       case _: List[_] => throw new RuntimeException() // TODO descriptive error message
     }
 
-  private def compareJsValues(expected: JsValue, maybeActual: Option[JsValue], path: Seq[String]): Seq[String] = expected match {
+  private def compareJsValues(expected: JsValue, maybeActual: Option[JsValue], path: JsPath): Errors = expected match {
     case x: JsArray => compareJsArrays(x, maybeActual, path)
     case x: JsString => compareJsStrings(x, maybeActual, path)
     case x: JsObject => compareJsObjects(x, maybeActual, path)
@@ -28,7 +28,7 @@ object Core {
     case JsNull => compareJsNull(maybeActual, path)
   }
 
-  private def compareJsArrays(expected: JsArray, maybeActual: Option[JsValue], path: Seq[String]): Seq[String] =
+  private def compareJsArrays(expected: JsArray, maybeActual: Option[JsValue], path: JsPath): Errors =
     maybeActual match {
       case Some(actual: JsArray) if expected.value.size != actual.value.size =>
         arraysDifferentSizeError(expected, actual, path)
@@ -41,30 +41,30 @@ object Core {
       case None => missingElementError(JsArray.getClass, path)
     }
 
-  private def compareJsObjects(expected: JsObject, maybeActual: Option[JsValue], path: Seq[String]): Seq[String] = maybeActual match {
+  private def compareJsObjects(expected: JsObject, maybeActual: Option[JsValue], path: JsPath): Errors = maybeActual match {
     case Some(actual: JsObject) =>
-      def compareIntersection: Seq[String] = expected
+      def compareIntersection: Errors = expected
         .keys
         .intersect(actual.keys)
         .flatMap { (key: String) =>
           compareJsValues(expected.value(key), actual.value.get(key), path :+ key)
         }
         .toSeq
-      def compareSubset: Seq[String] = expected
+      def compareSubset: Errors = expected
         .keys
         .diff(actual.keys)
         .flatMap { (key: String) =>
           compareJsValues(expected.value(key), None, path :+ key)
         }
         .toSeq
-      def compareSuperset: Seq[String] = objectSupersetError(actual.keys.diff(expected.keys).toSeq, path)
+      def compareSuperset: Errors = objectSupersetError(actual.keys.diff(expected.keys).toSeq, path)
 
       compareIntersection ++ compareSubset ++ compareSuperset
     case Some(x) => typeMismatchError(JsObject.getClass, x.getClass, path)
     case None => missingElementError(JsObject.getClass, path)
   }
 
-  private def compareJsStrings(expected: JsString, maybeActual: Option[JsValue], path: Seq[String]): Seq[String] =
+  private def compareJsStrings(expected: JsString, maybeActual: Option[JsValue], path: JsPath): Errors =
     expected.value match {
       case PATTERN(pattern) => ???
       case _ => maybeActual match {
@@ -76,7 +76,7 @@ object Core {
       }
     }
 
-  private def compareJsNumbers(expected: JsNumber, maybeActual: Option[JsValue], path: Seq[String]): Seq[String] =
+  private def compareJsNumbers(expected: JsNumber, maybeActual: Option[JsValue], path: JsPath): Errors =
     maybeActual match {
       case Some(actual: JsNumber) if expected.value != actual.value =>
         equalityError(expected.getClass, expected.value.toString(), actual.value.toString(), path)
@@ -85,7 +85,7 @@ object Core {
       case None => missingElementError(expected.getClass, path)
     }
 
-  private def compareJsBoolean(expected: JsBoolean, maybeActual: Option[JsValue], path: Seq[String]): Seq[String] =
+  private def compareJsBoolean(expected: JsBoolean, maybeActual: Option[JsValue], path: JsPath): Errors =
     maybeActual match {
       case Some(actual: JsBoolean) if expected.value != actual.value =>
         equalityError(expected.getClass, expected.value.toString, actual.value.toString, path)
@@ -94,7 +94,7 @@ object Core {
       case None => missingElementError(expected.getClass, path)
     }
 
-  private def compareJsNull(maybeActual: Option[JsValue], path: Seq[String]): Seq[String] = maybeActual match {
+  private def compareJsNull(maybeActual: Option[JsValue], path: JsPath): Errors = maybeActual match {
     case Some(JsNull) => Nil
     case Some(x) => typeMismatchError(JsNull.getClass, x.getClass, path)
     case None => missingElementError(JsNull.getClass, path)
