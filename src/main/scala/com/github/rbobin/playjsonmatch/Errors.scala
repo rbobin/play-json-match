@@ -19,13 +19,4 @@ private[playjsonmatch] object Errors {
   private def prettifyPath(path: JsPath): String = path.headOption.map { _ =>
     "/ " + path.mkString(" / ")
   }.getOrElse("/")
-
-  private def getJsClassName(jsValue: JsValue): String = jsValue match {
-    case _: JsArray => ARRAY
-    case _: JsObject => OBJECT
-    case _: JsString => STRING
-    case _: JsNumber => NUMBER
-    case _: JsBoolean => BOOLEAN
-    case JsNull => NULL
-  }
 }

@@ -12,4 +12,5 @@ package object playjsonmatch {
   val NUMBER = "Number"
   val BOOLEAN = "Boolean"
   val NULL = "Null"
+  val NONE = "Nothing"
 }
