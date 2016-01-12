@@ -14,7 +14,9 @@ private[playjsonmatch] object Errors {
     Seq(s"Object ${prettifyPath(path)} does not contain required properties: [${keys.mkString(", ")}]")
   }.getOrElse(Nil)
 
-  def equalityError(expecedClassName: String, expectedValue: String, actualValue: String, path: JsPath): Errors = ???
+  def equalityError(expectedClassName: String, expectedValue: String, actualValue: String, path: JsPath): Errors = ???
+
+  def matchError(matchErrors: Seq[MatchError], maybeActual: Option[JsValue], path: JsPath): Errors = ???
 
   private def prettifyPath(path: JsPath): String = path.headOption.map { _ =>
     "/ " + path.mkString(" / ")

@@ -5,7 +5,7 @@ import com.github.rbobin.playjsonmatch.Errors._
 
 object Core {
 
-  val PATTERN = (
+  val pattern = (
     "^" +        // Start of string
       "\\#\\[" + // Start of pattern
       "(.*)" +   // Capturing group
@@ -67,7 +67,7 @@ object Core {
 
   private def compareJsStrings(expected: JsString, maybeActual: Option[JsValue], path: JsPath): Errors =
     expected.value match {
-      case PATTERN(pattern) => ???
+      case pattern(patternsStrings) => Matcher.processPatterns(patternsStrings, maybeActual, path)
       case _ => maybeActual match {
         case Some(actual: JsString) if expected.value != actual.value =>
           equalityError(STRING, s"\'${expected.value}\'", s"\'${actual.value}\'", path)

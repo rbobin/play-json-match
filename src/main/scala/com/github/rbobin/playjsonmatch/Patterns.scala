@@ -1,92 +1,107 @@
 package com.github.rbobin.playjsonmatch
 
 import com.github.rbobin.playjsonmatch.utils.Utils
-import play.api.libs.json.{JsNull, JsValue}
+import play.api.libs.json.{JsBoolean, JsNull, JsValue}
+import Errors._
 
 object Matcher {
-  val patterns: Seq[PatternHolder] = Seq(AnythingHolder, MissingHolder)
+  val processors: Seq[PatternProcessor] = Seq(AnythingProcessor)
+  val splitCharacter = "|"
 
-  def processPattern(pattern: String, maybeJsValue: Option[JsValue], path: JsPath): Errors = {
-    val patternsMap: Map[String, Option[PatternHolder]] = pattern
-      .split('|')
-      .map { patternPiece =>
-        (patternPiece, patterns.find(p => p.isMatch(patternPiece)))
+  def processPatterns(patterns: String, maybeJsValue: Option[JsValue], path: JsPath): Errors = {
+    val matchResults = patterns
+      .split(splitCharacter)
+      .map(pattern => processPattern(pattern, maybeJsValue))
+
+    if (matchResults.exists(_.isInstanceOf[MatchSuccess]))
+      NO_ERRORS
+    else {
+      val matchErrors = matchResults.collect { case x: MatchError => x }
+      matchError(matchErrors, maybeJsValue, path)
+    }
+  }
+
+  private def processPattern(pattern: String, maybeJsValue: Option[JsValue]): MatchResult =
+    filterSkipped(pattern, processors.map(processor => processor.process(pattern, maybeJsValue)))
+
+  private def filterSkipped(pattern: String, results: Seq[MatchResult]): MatchResult =
+    results.filter(_ != MatchSkipped) match {
+      case Nil => throw new RuntimeException("Pattern didn't match anything")
+      case x :: Nil => x
+      case x: Seq[MatchResult] =>
+        throw new RuntimeException(s"Multiple matches for single pattern $pattern : ${x.map(_.processorName).mkString(",")}")
+    }
+}
+
+sealed trait MatchResult {
+  def processorName: String
+}
+case object MatchSkipped extends MatchResult {
+  val processorName = "Nothing"
+}
+case class MatchSuccess(processorName: String) extends MatchResult
+case class MatchError(expected: String, processorName: String) extends MatchResult
+
+trait PatternProcessor {
+  def processorName = this.getClass.getSimpleName
+  def process(patternCandidate: String, maybeJsValue: Option[JsValue]): MatchResult
+  def fail(expected: String, maybeJsValue: Option[JsValue]) =
+    MatchError(s"Expected $expected, found ${Utils.getStringRepresentation(maybeJsValue)}", processorName)
+  def success = MatchSuccess(processorName)
+  def skip = MatchSkipped
+  def buildExpected(expected: String, params: String*): String = ???
+}
+
+object AnythingProcessor extends PatternProcessor {
+  val patternString = "*"
+
+  override def process(patternCandidate: String, maybeJsValue: Option[JsValue]) =
+    patternCandidate match {
+      case `patternString` => maybeJsValue match {
+        case Some(_) => success
+        case x => fail("Anything", x)
       }
-      .toMap
-
-    val unmatchedStrings = patternsMap.toSeq.filter(tuple => tuple._2.isEmpty ).map(tuple => tuple._1)
-
-    if (unmatchedStrings.nonEmpty) return unmatchedStrings.map ( string => s"Invalid pattern: $string")
-
-    val matchResults = patternsMap.toSeq.map( tuple => tuple._2.get.tryMatch(tuple._1, maybeJsValue))
-
-    if (matchResults.exists(_.isEmpty)) return NO_ERRORS
-
-    matchResults.filter(_.nonEmpty).map(errorMessage => s"Pattern did not matched: ${errorMessage.get}")
-  }
+      case _ => skip
+    }
 }
 
-trait PatternHolder {
+object MissingProcessor extends PatternProcessor {
+  val patternString = "?"
 
-  def isMatch(pattern: String): Boolean
-
-  def tryMatch(pattern: String, maybeJsValue: Option[JsValue]): Option[String]
+  override def process(patternCandidate: String, maybeJsValue: Option[JsValue]): MatchResult =
+    patternCandidate match {
+      case `patternString` => maybeJsValue match {
+        case None => success
+        case x => fail(NONE, x)
+      }
+      case _ => skip
+    }
 }
 
-object AnythingHolder extends PatternHolder {
+object NullProcessor extends PatternProcessor {
+  val patternString = "null"
 
-  val PATTERN = "*"
-
-  override def isMatch(pattern: String): Boolean = pattern == PATTERN
-
-  override def tryMatch(pattern: String, maybeJsValue: Option[JsValue]): Option[String] = maybeJsValue match {
-    case None => Some(s"Expected any element, found: ${Utils.getStringRepresentation(None)}")
-    case _ => None
-  }
+  override def process(patternCandidate: String, maybeJsValue: Option[JsValue]): MatchResult =
+    patternCandidate match {
+      case `patternString` => maybeJsValue match {
+        case Some(JsNull) => success
+        case x => fail(NULL, x)
+      }
+      case _ => skip
+    }
 }
 
-object MissingHolder extends PatternHolder {
+object BooleanProcessor extends PatternProcessor {
+  val patternString = "true|false"
 
-  val PATTERN = "?"
-
-  override def isMatch(pattern: String): Boolean = pattern == PATTERN
-
-  override def tryMatch(pattern: String, maybeJsValue: Option[JsValue]): Option[String] = maybeJsValue match {
-    case None => None
-    case x => Some(s"Expected missing element, found: ${Utils.getStringRepresentation(x)}")
-  }
-}
-
-object NullHolder extends PatternHolder {
-
-  val PATTERN = "null"
-
-  override def isMatch(pattern: String): Boolean = pattern == PATTERN
-
-  override def tryMatch(pattern: String, maybeJsValue: Option[JsValue]): Option[String] = maybeJsValue match {
-    case Some(JsNull) => None
-    case x => Some(s"Expected $NULL, found: ${Utils.getStringRepresentation(x)}")
-  }
-}
-
-object BooleanHolder extends PatternHolder {
-
-  val PATTERN = "true|false"
-
-  override def isMatch(pattern: String): Boolean = pattern.matches(PATTERN)
-
-  override def tryMatch(pattern: String, maybeJsValue: Option[JsValue]): Option[String] = {
-    if (pattern.matches(PATTERN))
-      None
-    else
-      Some(s"Expected Boolean: $pattern, found: ${Utils.getStringRepresentation(maybeJsValue)})")
-  }
-}
-
-object StringHolder extends PatternHolder {
-  val PATTERN = "^string$|^string:\\d+$|^string:\\d+:$|^string::\\d+$|^string:\\d+:\\d+$"
-
-  override def isMatch(pattern: String): Boolean = ???
-
-  override def tryMatch(pattern: String, maybeJsValue: Option[JsValue]): Option[String] = ???
+  override def process(patternCandidate: String, maybeJsValue: Option[JsValue]): MatchResult =
+    patternCandidate match {
+      case `patternString` =>
+        val expected = patternCandidate.toBoolean
+        maybeJsValue match {
+          case Some(x: JsBoolean) if expected == x.value => success
+          case x => fail(s"Boolean [$expected]", x)
+        }
+      case _ => skip
+    }
 }

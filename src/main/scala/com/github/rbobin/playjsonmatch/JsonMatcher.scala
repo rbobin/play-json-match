@@ -6,7 +6,7 @@ import play.api.libs.json.JsValue
 trait JsonMatcher {
 
   class JsonPatternMatcher(jsonPattern: JsValue) extends Matcher[JsValue] {
-    override def apply(left: JsValue): MatchResult = MatchResult(
+    override def apply(left: JsValue): org.scalatest.matchers.MatchResult = MatchResult(
       Core.matches(jsonPattern, left),
       "Json does not match pattern",
       "Json does match pattern")
