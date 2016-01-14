@@ -2,7 +2,7 @@ package com.github.rbobin.playjsonmatch
 
 import com.github.rbobin.playjsonmatch.processors.{NullProcessor, BooleanProcessor, MissingValueProcessor, AnyValueProcessor}
 import com.github.rbobin.playjsonmatch.utils.{MalformedJsPatternException, Utils}
-import play.api.libs.json.{JsBoolean, JsNull, JsValue}
+import play.api.libs.json.JsValue
 import Errors._
 
 sealed trait MatchAttempt
@@ -56,11 +56,11 @@ object Matcher {
 
   private def mergeMatchResults(errorsEitherSuccess: ErrorsOrSuccess, matchResult: MatchResult): ErrorsOrSuccess =
     errorsEitherSuccess match {
-      case success: Right => success
       case Left(errors) => matchResult match {
         case _: MatchSuccess => Right()
         case error: MatchError => Left(error :: errors)
       }
+      case Right(_) => Right()
     }
 
   private def processPattern(pattern: String, maybeJsValue: Option[JsValue]): MatchResult =
