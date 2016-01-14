@@ -14,7 +14,7 @@ object Utils {
     case JsNull => NULL
   }
 
-  def getStringRepresentation(maybeJsValue: Option[JsValue]): String = maybeJsValue match {
+  def toString(maybeJsValue: Option[JsValue]): String = maybeJsValue match {
     case None => NONE
     case Some(x: JsArray) => ARRAY
     case Some(x: JsObject) => OBJECT

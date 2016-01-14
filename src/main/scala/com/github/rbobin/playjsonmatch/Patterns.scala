@@ -1,107 +1,76 @@
 package com.github.rbobin.playjsonmatch
 
-import com.github.rbobin.playjsonmatch.utils.Utils
+import com.github.rbobin.playjsonmatch.processors.{NullProcessor, BooleanProcessor, MissingValueProcessor, AnyValueProcessor}
+import com.github.rbobin.playjsonmatch.utils.{MalformedJsPatternException, Utils}
 import play.api.libs.json.{JsBoolean, JsNull, JsValue}
 import Errors._
 
-object Matcher {
-  val processors: Seq[PatternProcessor] = Seq(AnythingProcessor)
-  val splitCharacter = "|"
-
-  def processPatterns(patterns: String, maybeJsValue: Option[JsValue], path: JsPath): Errors = {
-    val matchResults = patterns
-      .split(splitCharacter)
-      .map(pattern => processPattern(pattern, maybeJsValue))
-
-    if (matchResults.exists(_.isInstanceOf[MatchSuccess]))
-      NO_ERRORS
-    else {
-      val matchErrors = matchResults.collect { case x: MatchError => x }
-      matchError(matchErrors, maybeJsValue, path)
-    }
-  }
-
-  private def processPattern(pattern: String, maybeJsValue: Option[JsValue]): MatchResult =
-    filterSkipped(pattern, processors.map(processor => processor.process(pattern, maybeJsValue)))
-
-  private def filterSkipped(pattern: String, results: Seq[MatchResult]): MatchResult =
-    results.filter(_ != MatchSkipped) match {
-      case Nil => throw new RuntimeException("Pattern didn't match anything")
-      case x :: Nil => x
-      case x: Seq[MatchResult] =>
-        throw new RuntimeException(s"Multiple matches for single pattern $pattern : ${x.map(_.processorName).mkString(",")}")
-    }
-}
-
-sealed trait MatchResult {
+sealed trait MatchAttempt
+sealed trait MatchResult extends MatchAttempt {
   def processorName: String
 }
-case object MatchSkipped extends MatchResult {
-  val processorName = "Nothing"
-}
-case class MatchSuccess(processorName: String) extends MatchResult
-case class MatchError(expected: String, processorName: String) extends MatchResult
+case object MatchSkip extends MatchAttempt
+case class MatchSuccess(override val processorName: String) extends MatchResult
+case class MatchError(override val processorName: String, message: String) extends MatchResult
 
 trait PatternProcessor {
+  def process(patternCandidate: String, maybeJsValue: Option[JsValue]): MatchAttempt
+
   def processorName = this.getClass.getSimpleName
-  def process(patternCandidate: String, maybeJsValue: Option[JsValue]): MatchResult
   def fail(expected: String, maybeJsValue: Option[JsValue]) =
-    MatchError(s"Expected $expected, found ${Utils.getStringRepresentation(maybeJsValue)}", processorName)
+    MatchError(s"Expected $expected, found ${Utils.toString(maybeJsValue)}", processorName)
   def success = MatchSuccess(processorName)
-  def skip = MatchSkipped
-  def buildExpected(expected: String, params: String*): String = ???
+  def skip = MatchSkip
 }
 
-object AnythingProcessor extends PatternProcessor {
-  val patternString = "*"
+object Matcher {
+  val defaultProcessors: Seq[PatternProcessor] = Seq(AnyValueProcessor, MissingValueProcessor, BooleanProcessor,
+    NullProcessor)
+  val splitCharacter = '|'
+  val emptyString = ""
+  val emptyErrors = Left(Nil)
 
-  override def process(patternCandidate: String, maybeJsValue: Option[JsValue]) =
-    patternCandidate match {
-      case `patternString` => maybeJsValue match {
-        case Some(_) => success
-        case x => fail("Anything", x)
-      }
-      case _ => skip
+  type ErrorsOrSuccess = Either[List[MatchError], Unit]
+
+  def processPatterns(patterns: String, maybeJsValue: Option[JsValue], path: JsPath): Errors =
+    splitJsPatterns(patterns)
+      .map(verifyNotEmpty)
+      .map(processPattern(_, maybeJsValue))
+      .foldLeft[ErrorsOrSuccess](emptyErrors)(mergeMatchResults)
+    match {
+      case Left(errors) => matchErrors(errors, maybeJsValue, path)
+      case Right(_) => NO_ERRORS
     }
-}
 
-object MissingProcessor extends PatternProcessor {
-  val patternString = "?"
-
-  override def process(patternCandidate: String, maybeJsValue: Option[JsValue]): MatchResult =
-    patternCandidate match {
-      case `patternString` => maybeJsValue match {
-        case None => success
-        case x => fail(NONE, x)
-      }
-      case _ => skip
+  private def splitJsPatterns(jsPatterns: String): List[String] =
+    jsPatterns.split(splitCharacter).toList match {
+      case Nil => throw new MalformedJsPatternException("fixme")
+      case x => x
     }
-}
 
-object NullProcessor extends PatternProcessor {
-  val patternString = "null"
-
-  override def process(patternCandidate: String, maybeJsValue: Option[JsValue]): MatchResult =
-    patternCandidate match {
-      case `patternString` => maybeJsValue match {
-        case Some(JsNull) => success
-        case x => fail(NULL, x)
-      }
-      case _ => skip
+  private def verifyNotEmpty(jsPattern: String): String =
+    jsPattern match {
+      case `emptyString` => throw new MalformedJsPatternException("fixme")
+      case x => x
     }
-}
 
-object BooleanProcessor extends PatternProcessor {
-  val patternString = "true|false"
+  private def mergeMatchResults(errorsEitherSuccess: ErrorsOrSuccess, matchResult: MatchResult): ErrorsOrSuccess =
+    errorsEitherSuccess match {
+      case success: Right => success
+      case Left(errors) => matchResult match {
+        case _: MatchSuccess => Right()
+        case error: MatchError => Left(error :: errors)
+      }
+    }
 
-  override def process(patternCandidate: String, maybeJsValue: Option[JsValue]): MatchResult =
-    patternCandidate match {
-      case `patternString` =>
-        val expected = patternCandidate.toBoolean
-        maybeJsValue match {
-          case Some(x: JsBoolean) if expected == x.value => success
-          case x => fail(s"Boolean [$expected]", x)
-        }
-      case _ => skip
+  private def processPattern(pattern: String, maybeJsValue: Option[JsValue]): MatchResult =
+    filterSkipped(pattern, defaultProcessors.map(processor => processor.process(pattern, maybeJsValue)))
+
+  private def filterSkipped(pattern: String, results: Seq[MatchAttempt]): MatchResult =
+    results.filterNot(_ == MatchSkip) match {
+      case Nil => throw new RuntimeException("Pattern didn't match anything")
+      case (x: MatchResult) :: Nil => x
+      case x: Seq[MatchResult] =>
+        throw new RuntimeException(s"Multiple matches for single pattern $pattern : ${x.map(_.processorName).mkString(",")}")
     }
 }

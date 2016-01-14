@@ -16,7 +16,7 @@ private[playjsonmatch] object Errors {
 
   def equalityError(expectedClassName: String, expectedValue: String, actualValue: String, path: JsPath): Errors = ???
 
-  def matchError(matchErrors: Seq[MatchError], maybeActual: Option[JsValue], path: JsPath): Errors = ???
+  def matchErrors(matchErrors: Seq[MatchError], maybeActual: Option[JsValue], path: JsPath): Errors = ???
 
   private def prettifyPath(path: JsPath): String = path.headOption.map { _ =>
     "/ " + path.mkString(" / ")
