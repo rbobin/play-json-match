@@ -23,7 +23,7 @@ trait PatternProcessor {
   def skip = MatchSkip
 }
 
-object Matcher {
+private[playjsonmatch] object Matcher {
   val defaultProcessors: Seq[PatternProcessor] = Seq(AnyValueProcessor, MissingValueProcessor, BooleanProcessor,
     NullProcessor)
   val splitCharacter = '|'
