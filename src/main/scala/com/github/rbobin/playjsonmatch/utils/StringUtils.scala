@@ -3,7 +3,7 @@ package com.github.rbobin.playjsonmatch.utils
 import com.github.rbobin.playjsonmatch._
 import play.api.libs.json._
 
-object Utils {
+object StringUtils {
 
   def getJsClassName(jsValue: JsValue): String = jsValue match {
     case _: JsArray => ARRAY
@@ -23,4 +23,8 @@ object Utils {
     case Some(x: JsBoolean) => s"$BOOLEAN: ${x.value}"
     case Some(JsNull) => NULL
   }
+
+  def prettifyPath(path: Seq[String]): String = path.headOption.map { _ =>
+    "[ / " + path.mkString(" / ") + " ]"
+  }.getOrElse("[ / ]")
 }

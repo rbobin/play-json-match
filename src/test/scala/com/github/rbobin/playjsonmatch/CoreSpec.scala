@@ -1,9 +1,8 @@
 package com.github.rbobin.playjsonmatch
 
-import org.scalatest.{Matchers, FlatSpec}
 import play.api.libs.json.Json
 
-class CoreSpec extends FlatSpec with Matchers {
+class CoreSpec extends UnitSpec {
 
   val testJson =
     """
@@ -20,9 +19,8 @@ class CoreSpec extends FlatSpec with Matchers {
 
   "Json" should "match itself" in {
     val jsValue = Json.parse(testJson)
-    Core.matches(jsValue, jsValue) should be (true)
+    Core.matches(jsValue, jsValue) should be(true)
   }
-
 
 
 }

@@ -1,9 +1,10 @@
 package com.github.rbobin.playjsonmatch
 
 import com.github.rbobin.playjsonmatch.processors.{NullProcessor, BooleanProcessor, MissingValueProcessor, AnyValueProcessor}
-import com.github.rbobin.playjsonmatch.utils.{MalformedJsPatternException, Utils}
+import com.github.rbobin.playjsonmatch.utils.{MultipleMatchException, MalformedJsPatternException, StringUtils}
 import play.api.libs.json.JsValue
 import Errors._
+import StringUtils._
 
 sealed trait MatchAttempt
 sealed trait MatchResult extends MatchAttempt {
@@ -11,14 +12,15 @@ sealed trait MatchResult extends MatchAttempt {
 }
 case object MatchSkip extends MatchAttempt
 case class MatchSuccess(override val processorName: String) extends MatchResult
-case class MatchError(override val processorName: String, message: String) extends MatchResult
+case class MatchError(override val processorName: String, expected: String, found: String) extends MatchResult
 
 trait PatternProcessor {
   def process(patternCandidate: String, maybeJsValue: Option[JsValue]): MatchAttempt
 
-  def processorName = this.getClass.getSimpleName
+  val processorName = this.getClass.getSimpleName
+  def fail(expected: String, found: String) = MatchError(processorName, expected, found)
   def fail(expected: String, maybeJsValue: Option[JsValue]) =
-    MatchError(s"Expected $expected, found ${Utils.toString(maybeJsValue)}", processorName)
+    MatchError(processorName, expected, StringUtils.toString(maybeJsValue))
   def success = MatchSuccess(processorName)
   def skip = MatchSkip
 }
@@ -33,24 +35,33 @@ private[playjsonmatch] object Matcher {
   type ErrorsOrSuccess = Either[List[MatchError], Unit]
 
   def processPatterns(patterns: String, maybeJsValue: Option[JsValue], path: JsPath): Errors =
-    splitJsPatterns(patterns)
-      .map(verifyNotEmpty)
-      .map(processPattern(_, maybeJsValue))
-      .foldLeft[ErrorsOrSuccess](emptyErrors)(mergeMatchResults)
-    match {
-      case Left(errors) => matchErrors(errors, maybeJsValue, path)
-      case Right(_) => NO_ERRORS
+    try {
+      splitJsPatterns(patterns)
+        .map(verifyNotEmpty)
+        .map(processPattern(_, maybeJsValue))
+        .foldLeft[ErrorsOrSuccess](emptyErrors)(mergeMatchResults)
+      match {
+        case Left(errors) => matchErrors(errors, maybeJsValue, path)
+        case Right(_) => NO_ERRORS
+      }
+    } catch {
+      case e: MultipleMatchException =>
+        val newMessage = s"${e.message} at ${prettifyPath(path)}"
+        throw new MultipleMatchException(newMessage)
+      case e: MalformedJsPatternException =>
+        val newMessage = s"${e.message} at ${prettifyPath(path)}"
+        throw new MalformedJsPatternException(newMessage)
     }
 
   private def splitJsPatterns(jsPatterns: String): List[String] =
     jsPatterns.split(splitCharacter).toList match {
-      case Nil => throw new MalformedJsPatternException("fixme")
+      case Nil => throw new MalformedJsPatternException("No patterns found")
       case x => x
     }
 
   private def verifyNotEmpty(jsPattern: String): String =
     jsPattern match {
-      case `emptyString` => throw new MalformedJsPatternException("fixme")
+      case `emptyString` => throw new MalformedJsPatternException("Empty pattern")
       case x => x
     }
 
@@ -68,9 +79,9 @@ private[playjsonmatch] object Matcher {
 
   private def filterSkipped(pattern: String, results: Seq[MatchAttempt]): MatchResult =
     results.filterNot(_ == MatchSkip) match {
-      case Nil => throw new RuntimeException("Pattern didn't match anything")
+      case Nil => throw new MalformedJsPatternException(s"Pattern [ $pattern ] doesn't match anything")
       case (x: MatchResult) :: Nil => x
       case x: Seq[MatchResult] =>
-        throw new RuntimeException(s"Multiple matches for single pattern $pattern : ${x.map(_.processorName).mkString(",")}")
+        throw new MultipleMatchException(s"Multiple matches for single pattern [ $pattern ]: ${x.map(_.processorName).mkString(",")}")
     }
 }

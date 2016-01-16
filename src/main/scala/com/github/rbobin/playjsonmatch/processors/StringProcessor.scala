@@ -22,14 +22,17 @@ object SizedStringProcessor extends PatternProcessor {
 
   override def process(patternCandidate: String, maybeJsValue: Option[JsValue]): MatchAttempt =
     patternCandidate match {
-      case pattern(expectedSize) =>
+      case pattern(expectedLength) =>
         maybeJsValue match {
-          case Some(jsString: JsString) if jsString.value.length == expectedSize.toInt => success
-          case Some(jsString: JsString) => ??? // TODO Custom error
-          case x => fail(s"String of size $expectedSize", x)
+          case Some(jsString: JsString) if jsString.value.length == expectedLength.toInt => success
+          case Some(jsString: JsString) =>
+            fail(expectedString(expectedLength), s"String of length ${jsString.value.length}")
+          case x => fail(expectedString(expectedLength), x)
         }
       case _ => skip
     }
+
+  private def expectedString(expectedSize: String) = s"String of length $expectedSize"
 }
 
 object BoundedStringProcessor extends PatternProcessor {
@@ -37,23 +40,26 @@ object BoundedStringProcessor extends PatternProcessor {
 
   override def process(patternCandidate: String, maybeJsValue: Option[JsValue]): MatchAttempt =
     patternCandidate match {
-      case pattern(minSize, maxSize) =>
+      case pattern(minLength, maxLength) =>
         maybeJsValue match {
-          case Some(jsString: JsString) if checkStringBoundaries(jsString, minSize, maxSize) => success
-          case Some(jsString: JsString) => ??? // TODO Custom error
-          case x => fail(s"String of size $minSize to $maxSize", x)
+          case Some(jsString: JsString) if checkStringBoundaries(jsString, minLength, maxLength) => success
+          case Some(jsString: JsString) =>
+            fail(expectedString(minLength, maxLength), s"String of length ${jsString.value.length}")
+          case x => fail(expectedString(minLength, maxLength), x)
         }
     }
 
-  private def checkStringBoundaries(jsString: JsString, minSizeString: String, maxSizeString: String): Boolean = {
-    val minSize = minSizeString.toInt
-    val maxSize = maxSizeString.toInt
-    if (minSize > maxSize)
-      throw new MalformedJsPatternException("") // FIXME
+  private def checkStringBoundaries(jsString: JsString, minLengthString: String, maxLengthString: String): Boolean = {
+    val minLength = minLengthString.toInt
+    val maxLength = maxLengthString.toInt
+    if (minLength > maxLength)
+      throw new MalformedJsPatternException("Min length must be not greater than max length")
 
     val stringLength = jsString.value.length
-    stringLength >= minSize && stringLength <= maxSize
+    stringLength >= minLength && stringLength <= maxLength
   }
+
+  private def expectedString(minLength: String, maxLength: String) = s"String of length $minLength to $maxLength"
 }
 
 object LowerBoundedStringProcessor extends PatternProcessor {
@@ -61,13 +67,15 @@ object LowerBoundedStringProcessor extends PatternProcessor {
 
   override def process(patternCandidate: String, maybeJsValue: Option[JsValue]): MatchAttempt =
     patternCandidate match {
-      case pattern(minSize) =>
+      case pattern(minLength) =>
         maybeJsValue match {
-          case Some(jsString: JsString) if jsString.value.length >= minSize.toInt => success
-          case Some(jsString: JsString) => ??? // TODO Custom error
-          case x => fail(s"String of size at least $minSize", x)
+          case Some(jsString: JsString) if jsString.value.length >= minLength.toInt => success
+          case Some(jsString: JsString) => fail(expectedString(minLength), s"String of length ${jsString.value.length}")
+          case x => fail(expectedString(minLength), x)
         }
     }
+
+  private def expectedString(minLength: String) = s"String of length at least $minLength"
 }
 
 object UpperBoundedStringProcessor extends PatternProcessor {
@@ -75,11 +83,13 @@ object UpperBoundedStringProcessor extends PatternProcessor {
 
   override def process(patternCandidate: String, maybeJsValue: Option[JsValue]): MatchAttempt =
     patternCandidate match {
-      case pattern(maxSize) =>
+      case pattern(maxLength) =>
         maybeJsValue match {
-          case Some(jsString: JsString) if jsString.value.length <= maxSize.toInt => success
-          case Some(jsString: JsString) => ??? // TODO Custom error
-          case x => fail(s"String of size up to $maxSize", x)
+          case Some(jsString: JsString) if jsString.value.length <= maxLength.toInt => success
+          case Some(jsString: JsString) => fail(expectedString(maxLength), s"String of length ${jsString.value.length}")
+          case x => fail(expectedString(maxLength), x)
         }
     }
+
+  private def expectedString(maxLength: String) = s"String of length up to $maxLength"
 }
