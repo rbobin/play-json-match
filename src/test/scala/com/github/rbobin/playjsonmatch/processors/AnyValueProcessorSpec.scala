@@ -1,7 +1,7 @@
 package com.github.rbobin.playjsonmatch.processors
 
-import com.github.rbobin.playjsonmatch.{MatchSuccess, MatchSkip, UnitSpec, MatchError}
-import AnyValueProcessor._
+import com.github.rbobin.playjsonmatch.processors.AnyValueProcessor._
+import com.github.rbobin.playjsonmatch.{MatchError, MatchSkip, MatchSuccess, UnitSpec}
 import play.api.libs.json._
 
 class AnyValueProcessorSpec extends UnitSpec {
