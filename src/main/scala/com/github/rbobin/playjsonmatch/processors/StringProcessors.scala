@@ -32,17 +32,15 @@ object BoundedStringProcessor extends TwoCapturingGroupsProcessor {
 
   override def doMatch(minLength: String, maxLength: String, maybeJsValue: Option[JsValue]) =
     maybeJsValue match {
-      case Some(jsString: JsString) if checkStringBoundaries(jsString, minLength, maxLength) => success
+      case Some(jsString: JsString) if validateStringLength(jsString, minLength.toInt, maxLength.toInt) => success
       case Some(jsString: JsString) =>
         fail(expectedString(minLength, maxLength), s"String of length ${jsString.value.length}")
       case x => fail(expectedString(minLength, maxLength), x)
     }
 
-  private def checkStringBoundaries(jsString: JsString, minLengthString: String, maxLengthString: String): Boolean = {
-    val minLength = minLengthString.toInt
-    val maxLength = maxLengthString.toInt
+  private def validateStringLength(jsString: JsString, minLength: Int, maxLength: Int): Boolean = {
     if (minLength > maxLength)
-      throw new MalformedJsPatternException(s"Min length ($minLengthString) must be not greater than max length ($maxLengthString)")
+      throw new MalformedJsPatternException(s"Min length ($minLength) must be not greater than max length ($maxLength)")
 
     val stringLength = jsString.value.length
     stringLength >= minLength && stringLength <= maxLength

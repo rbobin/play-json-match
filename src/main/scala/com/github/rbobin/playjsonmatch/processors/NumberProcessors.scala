@@ -18,11 +18,11 @@ object NumberInRangeProcessor extends TwoCapturingGroupsProcessor {
 
   override def doMatch(min: String, max: String, maybeJsValue: Option[JsValue]) =
     maybeJsValue match {
-      case Some(jsNumber: JsNumber) if checkNumberBoundaries(jsNumber, min, max) => success
+      case Some(jsNumber: JsNumber) if validateNumber(jsNumber, min, max) => success
       case x => fail(s"Number in range [$min, $max]", x)
     }
 
-  private def checkNumberBoundaries(jsNumber: JsNumber, minString: String, maxString: String): Boolean = {
+  private def validateNumber(jsNumber: JsNumber, minString: String, maxString: String): Boolean = {
     val min = minString.toInt
     val max = maxString.toInt
     if (min > max)
