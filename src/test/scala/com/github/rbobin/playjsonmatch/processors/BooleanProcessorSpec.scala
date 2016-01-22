@@ -6,7 +6,7 @@ import play.api.libs.json._
 
 class BooleanProcessorSpec extends UnitSpec {
 
-  val pattern = BooleanProcessor.patternString
+  val regexString = BooleanProcessor.regex.regex
 
   "match" should "be skipped with irrelevant patterns" in {
     val maybeJsValue = Some(JsNull)
@@ -18,16 +18,16 @@ class BooleanProcessorSpec extends UnitSpec {
   }
 
   it should "succeed with relevant pattern and JsBoolean" in {
-    process(pattern, Some(JsBoolean(true)))  shouldBe a [MatchSuccess]
-    process(pattern, Some(JsBoolean(false))) shouldBe a [MatchSuccess]
+    process(regexString, Some(JsBoolean(true)))  shouldBe a [MatchSuccess]
+    process(regexString, Some(JsBoolean(false))) shouldBe a [MatchSuccess]
   }
 
   it should "fail with relevant pattern and anything else" in {
-    process(pattern, None)                  shouldBe a [MatchError]
-    process(pattern, Some(JsNumber(1)))     shouldBe a [MatchError]
-    process(pattern, Some(JsString("..."))) shouldBe a [MatchError]
-    process(pattern, Some(JsArray(Seq())))  shouldBe a [MatchError]
-    process(pattern, Some(JsObject(Seq()))) shouldBe a [MatchError]
-    process(pattern, Some(JsNull))          shouldBe a [MatchError]
+    process(regexString, None)                  shouldBe a [MatchError]
+    process(regexString, Some(JsNumber(1)))     shouldBe a [MatchError]
+    process(regexString, Some(JsString("..."))) shouldBe a [MatchError]
+    process(regexString, Some(JsArray(Seq())))  shouldBe a [MatchError]
+    process(regexString, Some(JsObject(Seq()))) shouldBe a [MatchError]
+    process(regexString, Some(JsNull))          shouldBe a [MatchError]
   }
 }

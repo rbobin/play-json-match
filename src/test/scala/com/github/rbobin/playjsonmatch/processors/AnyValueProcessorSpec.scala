@@ -6,7 +6,7 @@ import play.api.libs.json._
 
 class AnyValueProcessorSpec extends UnitSpec {
 
-  val pattern = AnyValueProcessor.patternString
+  val regexString = AnyValueProcessor.regex.regex
 
   "match" should "be skipped with irrelevant patterns" in {
     val maybeJsValue = Some(JsNull)
@@ -18,14 +18,14 @@ class AnyValueProcessorSpec extends UnitSpec {
   }
 
   it should "succeed with relevant pattern and any value" in {
-    process(pattern, Some(JsNull))          shouldBe a [MatchSuccess]
-    process(pattern, Some(JsString("")))    shouldBe a [MatchSuccess]
-    process(pattern, Some(JsNumber(1)))     shouldBe a [MatchSuccess]
-    process(pattern, Some(JsArray(Seq())))  shouldBe a [MatchSuccess]
-    process(pattern, Some(JsObject(Seq()))) shouldBe a [MatchSuccess]
+    process(regexString, Some(JsNull))          shouldBe a [MatchSuccess]
+    process(regexString, Some(JsString("")))    shouldBe a [MatchSuccess]
+    process(regexString, Some(JsNumber(1)))     shouldBe a [MatchSuccess]
+    process(regexString, Some(JsArray(Seq())))  shouldBe a [MatchSuccess]
+    process(regexString, Some(JsObject(Seq()))) shouldBe a [MatchSuccess]
   }
 
   it should "fail with relevant pattern and None" in {
-    process(pattern, None) shouldBe a [MatchError]
+    process(regexString, None) shouldBe a [MatchError]
   }
 }

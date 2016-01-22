@@ -6,6 +6,8 @@ import play.api.libs.json.JsValue
 import Errors._
 import StringUtils._
 
+import scala.util.matching.Regex
+
 sealed trait MatchAttempt
 sealed trait MatchResult extends MatchAttempt {
   def processorName: String
@@ -15,6 +17,8 @@ case class MatchSuccess(override val processorName: String) extends MatchResult
 case class MatchError(override val processorName: String, expected: String, found: String) extends MatchResult
 
 trait PatternProcessor {
+  val regex: Regex
+
   def process(patternCandidate: String, maybeJsValue: Option[JsValue]): MatchAttempt
 
   val processorName = this.getClass.getSimpleName
