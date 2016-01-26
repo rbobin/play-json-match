@@ -14,7 +14,7 @@ sealed trait MatchResult extends MatchAttempt {
 }
 case object MatchSkip extends MatchAttempt
 case class MatchSuccess(override val processorName: String) extends MatchResult
-case class MatchError(override val processorName: String, expected: String, found: String) extends MatchResult
+case class MatchError(override val processorName: String, message: String) extends MatchResult
 
 trait PatternProcessor {
   val regex: Regex
@@ -22,9 +22,7 @@ trait PatternProcessor {
   def process(patternCandidate: String, maybeJsValue: Option[JsValue]): MatchAttempt
 
   val processorName = this.getClass.getSimpleName
-  def fail(expected: String, found: String) = MatchError(processorName, expected, found)
-  def fail(expected: String, maybeJsValue: Option[JsValue]) =
-    MatchError(processorName, expected, StringUtils.toString(maybeJsValue))
+  def fail(message: String) = MatchError(processorName, message)
   def success = MatchSuccess(processorName)
   def skip = MatchSkip
 }

@@ -9,6 +9,6 @@ object MissingValueProcessor extends SimpleProcessor {
   override def doMatch(maybeJsValue: Option[JsValue]) =
     maybeJsValue match {
       case None => success
-      case x => fail(NONE, x)
+      case x => fail(FailureMessages("wasNotMissing", x))
     }
 }

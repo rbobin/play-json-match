@@ -1,5 +1,6 @@
 package com.github.rbobin.playjsonmatch.processors
 
+import com.github.rbobin.playjsonmatch.FailureMessages
 import play.api.libs.json.JsValue
 
 object AnyValueProcessor extends SimpleProcessor {
@@ -8,6 +9,6 @@ object AnyValueProcessor extends SimpleProcessor {
   override def doMatch(maybeJsValue: Option[JsValue]) =
     maybeJsValue match {
       case Some(_) => success
-      case x => fail("Anything", x)
+      case _ => fail(FailureMessages("wasNotAnything"))
     }
 }

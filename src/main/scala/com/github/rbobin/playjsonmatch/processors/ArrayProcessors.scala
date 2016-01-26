@@ -1,5 +1,6 @@
 package com.github.rbobin.playjsonmatch.processors
 
+import com.github.rbobin.playjsonmatch.FailureMessages
 import com.github.rbobin.playjsonmatch.utils.MalformedJsPatternException
 import play.api.libs.json.{JsArray, JsValue}
 
@@ -9,7 +10,7 @@ object SimpleArrayProcessor extends SimpleProcessor {
   override def doMatch(maybeJsValue: Option[JsValue]) =
     maybeJsValue match {
       case Some(_: JsArray) => success
-      case x => fail("Any array", x)
+      case x => fail(FailureMessages("wasNotArray", x))
     }
 }
 
@@ -19,8 +20,8 @@ object SizedArrayProcessor extends SingleCapturingGroupProcessor {
   override def doMatch(expectedSize: String, maybeJsValue: Option[JsValue]) =
     maybeJsValue match {
       case Some(jsArray: JsArray) if jsArray.value.size == expectedSize.toInt => success
-      case Some(jsArray: JsArray) => fail(s"Array of size $expectedSize", s"Array of size ${jsArray.value.size}")
-      case x => fail(s"Array of size $expectedSize", x)
+      case Some(jsArray: JsArray) => fail(FailureMessages("arraySizeMismatch", expectedSize, jsArray.value.size))
+      case x => fail(FailureMessages("wasNotArray", x))
     }
 }
 
@@ -30,13 +31,13 @@ object BoundedArrayProcessor extends TwoCapturingGroupsProcessor {
   override def doMatch(minSize: String, maxSize: String, maybeJsValue: Option[JsValue]) =
     maybeJsValue match {
       case Some(jsArray: JsArray) if validateArraySize(jsArray, minSize.toInt, maxSize.toInt) => success
-      case Some(jsArray: JsArray) => fail(s"Array of size $minSize to $maxSize", s"Array of size ${jsArray.value.size}")
-      case x => fail(s"Array of size $minSize to $maxSize", x)
+      case Some(jsArray: JsArray) => fail(FailureMessages("arrayBoundariesMismatch", minSize, maxSize, jsArray.value.size))
+      case x => fail(FailureMessages("wasNotArray", x))
     }
 
   private def validateArraySize(jsArray: JsArray, minSize: Int, maxSize: Int): Boolean = {
     if (minSize > maxSize)
-      throw new MalformedJsPatternException(s"Min size ($minSize) must be not greater than min size ($maxSize)")
+      throw new MalformedJsPatternException(FailureMessages("minSizeGreaterThanMaxSize", minSize, maxSize))
 
     val arraySize = jsArray.value.size
     arraySize >= minSize && arraySize <= maxSize
@@ -49,8 +50,8 @@ object LowerBoundedArrayProcessor extends SingleCapturingGroupProcessor {
   override def doMatch(minSize: String, maybeJsValue: Option[JsValue]) =
     maybeJsValue match {
       case Some(jsArray: JsArray) if jsArray.value.size >= minSize.toInt => success
-      case Some(jsArray: JsArray) => fail(s"Array of size at least $minSize", s"Array of size ${jsArray.value.size}")
-      case x => fail(s"Array of size at least $minSize", x)
+      case Some(jsArray: JsArray) => fail(FailureMessages("arrayMinSizeMismatch", minSize, jsArray.value.size))
+      case x => fail(FailureMessages("wasNotArray", x))
     }
 }
 
@@ -60,7 +61,7 @@ object UpperBoundedArrayProcessor extends SingleCapturingGroupProcessor {
   override def doMatch(maxSize: String, maybeJsValue: Option[JsValue]) =
     maybeJsValue match {
       case Some(jsArray: JsArray) if jsArray.value.size <= maxSize.toInt => success
-      case Some(jsArray: JsArray) => fail(s"Array of size at most $maxSize", s"Array of size ${jsArray.value.size}")
-      case x => fail(s"Array of size at most $maxSize", x)
+      case Some(jsArray: JsArray) => fail(FailureMessages("arrayMaxSizeMismatch", maxSize, jsArray.value.size))
+      case x => fail(FailureMessages("wasNotArray", x))
     }
 }

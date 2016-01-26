@@ -9,6 +9,6 @@ object NullProcessor extends SimpleProcessor {
   override def doMatch(maybeJsValue: Option[JsValue]) =
     maybeJsValue match {
       case Some(JsNull) => success
-      case x => fail(NULL, x)
+      case x => fail(FailureMessages("wasNotNull", x))
     }
 }

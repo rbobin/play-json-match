@@ -26,6 +26,7 @@ class AnyValueProcessorSpec extends UnitSpec {
   }
 
   it should "fail with relevant pattern and None" in {
+    val as = process(regexString, None)
     process(regexString, None) shouldBe a [MatchError]
   }
 }
