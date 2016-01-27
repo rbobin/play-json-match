@@ -1,5 +1,6 @@
 package com.github.rbobin.playjsonmatch.processors
 
+import com.github.rbobin.playjsonmatch.FailureMessages
 import com.github.rbobin.playjsonmatch.utils.MalformedJsPatternException
 import play.api.libs.json.{JsObject, JsValue}
 
@@ -9,7 +10,7 @@ object SimpleObjectProcessor extends SimpleProcessor {
   override def doMatch(maybeJsValue: Option[JsValue]) =
     maybeJsValue match {
       case Some(_: JsObject) => success
-      case x => fail("Any object", x)
+      case x => fail(FailureMessages("wasNotObject", x))
     }
 }
 
@@ -19,8 +20,8 @@ object SizedObjectProcessor extends SingleCapturingGroupProcessor {
   override def doMatch(expectedSize: String, maybeJsValue: Option[JsValue]) =
     maybeJsValue match {
       case Some(jsObject: JsObject) if jsObject.values.size == expectedSize.toInt => success
-      case Some(jsObject: JsObject) => fail(s"Object of size $expectedSize", s"Object of size ${jsObject.values.size}")
-      case x => fail(s"Object of size $expectedSize", x)
+      case Some(jsObject: JsObject) => fail(FailureMessages("objectSizeMismatch", jsObject.values.size))
+      case x => fail(FailureMessages("wasNotObject", x))
     }
 }
 
@@ -31,13 +32,13 @@ object BoundedObjectProcessor extends TwoCapturingGroupsProcessor {
     maybeJsValue match {
       case Some(jsObject: JsObject) if validateObjectSize(jsObject, minSize.toInt, maxSize.toInt) => success
       case Some(jsObject: JsObject) =>
-        fail(s"Object of size from $minSize to $maxSize", s"Object of size ${jsObject.values.size}")
-      case x => fail(s"Object of size from $minSize to $maxSize", x)
+        fail(FailureMessages("objectBoundariesMismatch", minSize, maxSize, jsObject.values.size))
+      case x => fail(FailureMessages("wasNotObject", x))
     }
 
   private def validateObjectSize(jsObject: JsObject, minSize: Int, maxSize: Int) = {
     if (minSize > maxSize)
-      throw new MalformedJsPatternException(s"Min size ($minSize) must be not greater than min size ($maxSize)")
+      throw new MalformedJsPatternException(FailureMessages("minSizeGreaterThanMaxSize", minSize, maxSize))
 
     val objectSize = jsObject.values.size
     objectSize >= minSize && objectSize <= maxSize
@@ -51,8 +52,8 @@ object LowerBoundedProcessor extends SingleCapturingGroupProcessor {
     maybeJsValue match {
       case Some(jsObject: JsObject) if jsObject.values.size >= minSize.toInt => success
       case Some(jsObject: JsObject) =>
-        fail(s"Object of size at least $minSize", s"Object of size ${jsObject.values.size}")
-      case x => fail(s"Object of size at least $minSize", x)
+        fail(FailureMessages("objectMinSizeMismatch", minSize, jsObject.values.size))
+      case x => fail(FailureMessages("wasNotObject", x))
     }
 }
 
@@ -63,7 +64,7 @@ object UpperBoundedProcessor extends SingleCapturingGroupProcessor {
     maybeJsValue match {
       case Some(jsObject: JsObject) if jsObject.values.size <= maxSize.toInt => success
       case Some(jsObject: JsObject) =>
-        fail(s"Object of size at most $maxSize", s"Object of size ${jsObject.values.size}")
-      case x => fail(s"Object of size at most $maxSize", x)
+        fail(FailureMessages("objectMaxSizeMismatch", maxSize, jsObject.values.size))
+      case x => fail(FailureMessages("wasNotObject", x))
     }
 }
