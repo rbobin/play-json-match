@@ -1,5 +1,6 @@
 package com.github.rbobin.playjsonmatch.processors
 
+import com.github.rbobin.playjsonmatch.FailureMessages
 import com.github.rbobin.playjsonmatch.utils.MalformedJsPatternException
 import play.api.libs.json.{JsString, JsValue}
 
@@ -9,7 +10,7 @@ object SimpleStringProcessor extends SimpleProcessor {
   override def doMatch(maybeJsValue: Option[JsValue]) =
     maybeJsValue match {
       case Some(_: JsString) => success
-      case x => fail("Any string", x)
+      case x => fail(FailureMessages("wasNotString", x))
     }
 }
 
@@ -19,12 +20,9 @@ object SizedStringProcessor extends SingleCapturingGroupProcessor {
   override def doMatch(expectedLength: String, maybeJsValue: Option[JsValue]) =
     maybeJsValue match {
       case Some(jsString: JsString) if jsString.value.length == expectedLength.toInt => success
-      case Some(jsString: JsString) =>
-        fail(expectedString(expectedLength), s"String of length ${jsString.value.length}")
-      case x => fail(expectedString(expectedLength), x)
+      case Some(jsString: JsString) => fail(FailureMessages("stringSizeMismatch", expectedLength, jsString.value))
+      case x => fail(FailureMessages("wasNotString", x))
     }
-
-  private def expectedString(expectedSize: String) = s"String of length $expectedSize"
 }
 
 object BoundedStringProcessor extends TwoCapturingGroupsProcessor {
@@ -33,20 +31,17 @@ object BoundedStringProcessor extends TwoCapturingGroupsProcessor {
   override def doMatch(minLength: String, maxLength: String, maybeJsValue: Option[JsValue]) =
     maybeJsValue match {
       case Some(jsString: JsString) if validateStringLength(jsString, minLength.toInt, maxLength.toInt) => success
-      case Some(jsString: JsString) =>
-        fail(expectedString(minLength, maxLength), s"String of length ${jsString.value.length}")
-      case x => fail(expectedString(minLength, maxLength), x)
+      case Some(jsString: JsString) => fail(FailureMessages("stringBoundariesMismatch", minLength, maxLength, jsString.value))
+      case x => fail(FailureMessages("wasNotString", x))
     }
 
   private def validateStringLength(jsString: JsString, minLength: Int, maxLength: Int): Boolean = {
     if (minLength > maxLength)
-      throw new MalformedJsPatternException(s"Min length ($minLength) must be not greater than max length ($maxLength)")
+      throw new MalformedJsPatternException(FailureMessages("minLengthGreaterThanMaxLength", minLength, maxLength))
 
     val stringLength = jsString.value.length
     stringLength >= minLength && stringLength <= maxLength
   }
-
-  private def expectedString(minLength: String, maxLength: String) = s"String of length $minLength to $maxLength"
 }
 
 object LowerBoundedStringProcessor extends SingleCapturingGroupProcessor {
@@ -55,11 +50,9 @@ object LowerBoundedStringProcessor extends SingleCapturingGroupProcessor {
   override def doMatch(minLength: String, maybeJsValue: Option[JsValue]) =
     maybeJsValue match {
       case Some(jsString: JsString) if jsString.value.length >= minLength.toInt => success
-      case Some(jsString: JsString) => fail(expectedString(minLength), s"String of length ${jsString.value.length}")
-      case x => fail(expectedString(minLength), x)
+      case Some(jsString: JsString) => fail(FailureMessages("stringMinSizeMismatch", minLength, jsString.value.length))
+      case x => fail(FailureMessages("wasNotString", x))
     }
-
-  private def expectedString(minLength: String) = s"String of length at least $minLength"
 }
 
 object UpperBoundedStringProcessor extends SingleCapturingGroupProcessor {
@@ -68,9 +61,7 @@ object UpperBoundedStringProcessor extends SingleCapturingGroupProcessor {
   override def doMatch(maxLength: String, maybeJsValue: Option[JsValue]) =
     maybeJsValue match {
       case Some(jsString: JsString) if jsString.value.length <= maxLength.toInt => success
-      case Some(jsString: JsString) => fail(expectedString(maxLength), s"String of length ${jsString.value.length}")
-      case x => fail(expectedString(maxLength), x)
+      case Some(jsString: JsString) => fail(FailureMessages("stringMaxSizeMismatch", maxLength, jsString.value.length))
+      case x => fail(FailureMessages("wasNotString", x))
     }
-
-  private def expectedString(maxLength: String) = s"String of length up to $maxLength"
 }

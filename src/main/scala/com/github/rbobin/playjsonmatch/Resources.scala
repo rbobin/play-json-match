@@ -14,6 +14,6 @@ private[playjsonmatch] object Resources {
   def apply(resourceName: String, argArray: AnyRef*): String = {
     val raw = apply(resourceName)
     val msgFmt = new MessageFormat(raw)
-    msgFmt.format(argArray)
+    msgFmt.format(argArray.toArray)
   }
 }

@@ -16,7 +16,6 @@ trait SimpleProcessor extends PatternProcessor {
 }
 
 trait SingleCapturingGroupProcessor extends PatternProcessor {
-
   override final def process(patternCandidate: String, maybeJsValue: Option[JsValue]): MatchAttempt = {
     patternCandidate match {
       case regex(m) => doMatch(m, maybeJsValue)

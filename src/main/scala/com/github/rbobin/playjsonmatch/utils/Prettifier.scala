@@ -8,15 +8,18 @@ object Prettifier {
   val default: Prettifier =
     new Prettifier {
       override def apply(v1: Any): String = v1 match {
-        case null => "null"
-        case x: Unit => "<(), the Unit value>"
-        case x: String => "\"" + x + "\""
-        case JsNull => "Null"
-        case JsString(x) => "\"" + x + "\""
-        case JsNumber(x) => x.toString
-        case JsBoolean(x) => x.toString
-        case JsArray(x) => s"Array[${x.length}]"
-        case JsObject(x) => s"Object[${x.values.size}]"
+        case None => "None"
+        case Some(some) => some match {
+          case null => "null"
+          case x: Unit => "<(), the Unit value>"
+          case x: String => "\"" + x + "\""
+          case JsNull => "Null"
+          case JsString(x) => "\"" + x + "\""
+          case JsNumber(x) => x.toString
+          case JsBoolean(x) => x.toString
+          case JsArray(x) => s"Array[${x.length}]"
+          case JsObject(x) => s"Object[${x.values.size}]"
+        }
       }
     }
 }
