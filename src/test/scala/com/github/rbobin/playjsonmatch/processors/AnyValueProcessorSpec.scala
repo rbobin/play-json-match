@@ -1,12 +1,11 @@
 package com.github.rbobin.playjsonmatch.processors
 
-import com.github.rbobin.playjsonmatch.processors.AnyValueProcessor._
-import com.github.rbobin.playjsonmatch.{MatchError, MatchSkip, MatchSuccess, UnitSpec}
+import com.github.rbobin.playjsonmatch.{MatchError, MatchSkip, MatchSuccess}
 import play.api.libs.json._
 
-class AnyValueProcessorSpec extends UnitSpec {
+class AnyValueProcessorSpec extends ProcessorSpec {
 
-  val regexString = AnyValueProcessor.regex.regex
+  val processor = AnyValueProcessor
 
   "match" should "be skipped with irrelevant patterns" in {
     val maybeJsValue = Some(JsNull)
@@ -26,7 +25,6 @@ class AnyValueProcessorSpec extends UnitSpec {
   }
 
   it should "fail with relevant pattern and None" in {
-    val as = process(regexString, None)
     process(regexString, None) shouldBe a [MatchError]
   }
 }
