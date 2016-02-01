@@ -10,6 +10,7 @@ object Prettifier {
       override def apply(v1: Any): String = v1 match {
         case None => "None"
         case x: String => "\"" + x + "\""
+        case x: Int => x.toString
         case Some(some) => some match {
           case null => "null"
           case x: Unit => "<(), the Unit value>"
