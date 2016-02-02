@@ -5,7 +5,7 @@ import play.api.libs.json._
 
 class BooleanProcessorSpec extends ProcessorSpec {
 
-  val processor = BooleanProcessor
+  override val processor = BooleanProcessor
 
   "match" should "be skipped with irrelevant patterns" in {
     val maybeJsValue = Some(JsNull)

@@ -6,7 +6,7 @@ import play.api.libs.json._
 
 class SimpleStringProcessorSpec extends ProcessorSpec {
 
-  val processor = SimpleStringProcessor
+  override val processor = SimpleStringProcessor
 
   "match" should "be skipped with irrelevant patterns" in {
     val maybeJsValue = Some(JsNull)
@@ -35,7 +35,7 @@ class SimpleStringProcessorSpec extends ProcessorSpec {
 
 class SizedStringProcessorSpec extends ProcessorSpec {
 
-  val processor = SizedStringProcessor
+  override val processor = SizedStringProcessor
 
   "match" should "be skipped with irrelevant patterns" in {
     val maybeJsValue = Some(JsNull)
@@ -75,7 +75,7 @@ class SizedStringProcessorSpec extends ProcessorSpec {
 
 class BoundedStringProcessorSpec extends ProcessorSpec {
 
-  val processor = BoundedStringProcessor
+  override val processor = BoundedStringProcessor
 
   "match" should "be skipped with irrelevant patterns" in {
     val maybeJsValue = Some(JsNull)
@@ -110,15 +110,59 @@ class BoundedStringProcessorSpec extends ProcessorSpec {
   }
 
   it should "fail with relevant pattern and JsString of wrong size" in {
-    process("string:0:1", Some(JsString("??")))      shouldBe a [MatchError]
-    process("string:1:5", Some(JsString("")))        shouldBe a [MatchError]
-    process("string:5:10", Some(JsString("abcd")))   shouldBe a [MatchError]
-    process("string:1:1", Some(JsString("")))        shouldBe a [MatchError]
-    process("string:10:10", Some(JsString(",")))     shouldBe a [MatchError]
+    process("string:0:1", Some(JsString("??")))    shouldBe a [MatchError]
+    process("string:1:5", Some(JsString("")))      shouldBe a [MatchError]
+    process("string:5:10", Some(JsString("abcd"))) shouldBe a [MatchError]
+    process("string:1:1", Some(JsString("ab")))    shouldBe a [MatchError]
+    process("string:10:10", Some(JsString(",")))   shouldBe a [MatchError]
   }
 
   it should "throw an exception if min length is greater than max length" in {
     a [MalformedJsPatternException] should be thrownBy process("string:1:0", Some(JsString("1")))
     a [MalformedJsPatternException] should be thrownBy process("string:1000:500", Some(JsString("")))
+  }
+}
+
+class LowerBoundedStringProcessorSpec extends ProcessorSpec {
+
+  override val processor = LowerBoundedStringProcessor
+
+  "match" should "be skipped with irrelevant patterns" in {
+    val maybeJsValue = Some(JsNull)
+
+    process(null, maybeJsValue)          shouldBe MatchSkip
+    process("", maybeJsValue)            shouldBe MatchSkip
+    process("a", maybeJsValue)           shouldBe MatchSkip
+    process("string", maybeJsValue)      shouldBe MatchSkip
+    process("string::", maybeJsValue)    shouldBe MatchSkip
+    process("string:-3:", maybeJsValue)  shouldBe MatchSkip
+    process("string:1.5:", maybeJsValue) shouldBe MatchSkip
+    process("string:5", maybeJsValue)    shouldBe MatchSkip
+  }
+
+  it should "succeed with relevant pattern and JsString of correct size" in {
+    process("string:0:", Some(JsString("")))             shouldBe a [MatchSuccess]
+    process("string:1:", Some(JsString(".")))            shouldBe a [MatchSuccess]
+    process("string:0:", Some(JsString("abcd")))         shouldBe a [MatchSuccess]
+    process("string:10:", Some(JsString("1234567890")))  shouldBe a [MatchSuccess]
+    process("string:10:", Some(JsString("12345678901"))) shouldBe a [MatchSuccess]
+    process("string:5:", Some(JsString("1000000")))      shouldBe a [MatchSuccess]
+  }
+
+  it should "fail with relevant pattern and not JsString" in {
+    process("string:0:", None)                   shouldBe a [MatchError]
+    process("string:5:", Some(JsNull))           shouldBe a [MatchError]
+    process("string:0:", Some(JsBoolean(false))) shouldBe a [MatchError]
+    process("string:777:", Some(JsNumber(0)))    shouldBe a [MatchError]
+    process("string:2:", Some(JsArray(Seq())))   shouldBe a [MatchError]
+    process("string:10:", Some(JsObject(Seq()))) shouldBe a [MatchError]
+  }
+
+  it should "fail with relevant pattern and JsString of wrong size" in {
+    process("string:3:", Some(JsString("??")))   shouldBe a [MatchError]
+    process("string:1:", Some(JsString("")))     shouldBe a [MatchError]
+    process("string:5:", Some(JsString("abcd"))) shouldBe a [MatchError]
+    process("string:1:", Some(JsString("")))     shouldBe a [MatchError]
+    process("string:10:", Some(JsString(",")))   shouldBe a [MatchError]
   }
 }

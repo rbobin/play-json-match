@@ -5,7 +5,7 @@ import play.api.libs.json._
 
 class NullProcessorSpec extends ProcessorSpec {
 
-  val processor = NullProcessor
+  override val processor = NullProcessor
 
   "match" should "be skipped with irrelevant patterns" in {
     val maybeJsValue = Some(JsNull)
