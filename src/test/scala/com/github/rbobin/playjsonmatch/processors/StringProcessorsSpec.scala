@@ -195,3 +195,55 @@ class LowerBoundedStringProcessorSpec extends ProcessorSpec {
     )
   }
 }
+
+class UpperBoundedStringProcessorSpec extends ProcessorSpec {
+
+  override val processor = UpperBoundedStringProcessor
+
+  "match" should "be skipped with irrelevant patterns" in {
+    val maybeJsValue = Some(JsNull)
+
+    assertAllMatchSkip(
+      (null, maybeJsValue),
+      ("", maybeJsValue),
+      ("a", maybeJsValue),
+      ("string", maybeJsValue),
+      ("string::", maybeJsValue),
+      ("string::-20", maybeJsValue),
+      ("string::1.0", maybeJsValue),
+      ("string:1:5", maybeJsValue)
+    )
+  }
+
+  it should "succeed with relevant pattern and JsString of correct size" in {
+    assertAllMatchSuccess(
+      ("string::0", Some(JsString(""))),
+      ("string::1", Some(JsString("."))),
+      ("string::1000", Some(JsString("abcd"))),
+      ("string::10", Some(JsString("1234567890"))),
+      ("string::10", Some(JsString("123456789"))),
+      ("string::15", Some(JsString("1000000")))
+    )
+  }
+
+  it should "fail with relevant pattern and not JsString" in {
+    assertAllMatchError(
+      ("string::0", None),
+      ("string::5", Some(JsNull)),
+      ("string::0", Some(JsBoolean(false))),
+      ("string::777", Some(JsNumber(0))),
+      ("string::2", Some(JsArray(Seq()))),
+      ("string::10", Some(JsObject(Seq())))
+    )
+  }
+
+  it should "fail with relevant pattern and JsString of wrong size" in {
+    assertAllMatchError(
+      ("string::3", Some(JsString("????"))),
+      ("string::0", Some(JsString("$"))),
+      ("string::5", Some(JsString("abcdef"))),
+      ("string::1", Some(JsString("qwertyuiop"))),
+      ("string::10", Some(JsString("12345678901")))
+    )
+  }
+}
