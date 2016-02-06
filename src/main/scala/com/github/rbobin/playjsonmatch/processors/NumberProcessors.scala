@@ -15,7 +15,7 @@ object SimpleNumberProcessor extends SimpleProcessor {
 }
 
 object NumberInRangeProcessor extends TwoCapturingGroupsProcessor {
-  override val regex = "^number:(\\d+):(\\d+)$".r
+  override val regex = "^number:(-?\\d*\\.{0,1}\\d+):(-?\\d*\\.{0,1}\\d+)$".r
 
   override def doMatch(min: String, max: String, maybeJsValue: Option[JsValue]) =
     maybeJsValue match {
@@ -25,9 +25,9 @@ object NumberInRangeProcessor extends TwoCapturingGroupsProcessor {
     }
 
   private def validateNumber(jsNumber: JsNumber, minString: String, maxString: String): Boolean = {
-    val min = minString.toInt
-    val max = maxString.toInt
-    if (min > max)
+    val min = BigDecimal.exact(minString)
+    val max = BigDecimal.exact(maxString)
+    if (min.>(max))
       throw new MalformedJsPatternException(FailureMessages("minValueGreaterThanMaxValue", max, min))
 
     val number = jsNumber.value

@@ -11,6 +11,7 @@ object Prettifier {
         case None => "None"
         case x: String => "\"" + x + "\""
         case x: Int => x.toString
+        case x: BigDecimal => x.toString
         case Some(some) => some match {
           case null => "null"
           case x: Unit => "<(), the Unit value>"
