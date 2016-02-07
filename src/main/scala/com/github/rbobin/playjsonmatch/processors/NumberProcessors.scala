@@ -35,12 +35,12 @@ object NumberInRangeProcessor extends TwoCapturingGroupsProcessor {
   }
 }
 
-object LowerBoundedNumber extends SingleCapturingGroupProcessor {
-  override val regex = "^number:(\\d+):$".r
+object LowerBoundedNumberProcessor extends SingleCapturingGroupProcessor {
+  override val regex = "^number:(-?\\d*\\.{0,1}\\d+):$".r
 
   override def doMatch(min: String, maybeJsValue: Option[JsValue]) =
     maybeJsValue match {
-      case Some(jsNumber: JsNumber) if jsNumber.value >= min.toInt => success
+      case Some(jsNumber: JsNumber) if jsNumber.value >= BigDecimal.exact(min) => success
       case Some(jsNumber: JsNumber) => fail(FailureMessages("numberLowBoundMismatch", jsNumber.value, min))
       case x => fail(FailureMessages("wasNotNumber", x))
     }
