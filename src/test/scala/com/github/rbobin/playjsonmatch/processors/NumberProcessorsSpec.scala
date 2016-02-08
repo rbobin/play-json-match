@@ -125,7 +125,7 @@ class LowerBoundedNumberProcessorSpec extends ProcessorSpec {
       ("number::1", maybeJsValue),
       ("number:1.:", maybeJsValue),
       ("number:1z:", maybeJsValue),
-      ("number:1.5.1:3", maybeJsValue)
+      ("number:1.5.1:", maybeJsValue)
     )
   }
 
@@ -160,6 +160,60 @@ class LowerBoundedNumberProcessorSpec extends ProcessorSpec {
       ("number:5.0:", Some(JsNumber(4.99))),
       ("number:-1:", Some(JsNumber(-2))),
       ("number:10:", Some(JsNumber(0)))
+    )
+  }
+}
+
+class UpperBoundedNumberProcessorSpec extends ProcessorSpec {
+
+  override val processor = UpperBoundedNumberProcessor
+
+  "match" should "be skipped with irrelevant patterns" in {
+    val maybeJsValue = Some(JsNull)
+
+    assertAllMatchSkip(
+      (null, maybeJsValue),
+      ("", maybeJsValue),
+      ("a", maybeJsValue),
+      ("number", maybeJsValue),
+      ("number::", maybeJsValue),
+      ("number:1:", maybeJsValue),
+      ("number::1.", maybeJsValue),
+      ("number::1,5", maybeJsValue)
+    )
+  }
+
+  it should "succeed with relevant pattern and JsNumber in correct range" in {
+    assertAllMatchSuccess(
+      ("number::0", Some(JsNumber(0))),
+      ("number::0.0000", Some(JsNumber(0))),
+      ("number::-0.0000", Some(JsNumber(0))),
+      ("number::1", Some(JsNumber(1))),
+      ("number::.0", Some(JsNumber(-0.1))),
+      ("number::.1", Some(JsNumber(-1.1))),
+      ("number::0.005", Some(JsNumber(0.005))),
+      ("number::-10.1", Some(JsNumber(-10.2)))
+    )
+  }
+
+  it should "fail with relevant pattern and not JsNumber" in {
+    assertAllMatchError(
+      ("number::0", None),
+      ("number::5", Some(JsNull)),
+      ("number::0", Some(JsBoolean(false))),
+      ("number::-1000.1", Some(JsString("-2"))),
+      ("number::2", Some(JsArray(Seq()))),
+      ("number::10", Some(JsObject(Seq())))
+    )
+  }
+
+  it should "fail with relevant pattern and JsNumber not in correct range" in {
+    assertAllMatchError(
+      ("number::0", Some(JsNumber(1))),
+      ("number::1", Some(JsNumber(1.001))),
+      ("number::5.0", Some(JsNumber(5.01))),
+      ("number::-1", Some(JsNumber(-0.4))),
+      ("number::10", Some(JsNumber(100)))
     )
   }
 }

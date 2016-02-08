@@ -15,7 +15,7 @@ object SimpleNumberProcessor extends SimpleProcessor {
 }
 
 object NumberInRangeProcessor extends TwoCapturingGroupsProcessor {
-  override val regex = "^number:(-?\\d*\\.{0,1}\\d+):(-?\\d*\\.{0,1}\\d+)$".r
+  override val regex = s"^number:$rationalNumberRegex:$rationalNumberRegex$$".r
 
   override def doMatch(min: String, max: String, maybeJsValue: Option[JsValue]) =
     maybeJsValue match {
@@ -36,7 +36,7 @@ object NumberInRangeProcessor extends TwoCapturingGroupsProcessor {
 }
 
 object LowerBoundedNumberProcessor extends SingleCapturingGroupProcessor {
-  override val regex = "^number:(-?\\d*\\.{0,1}\\d+):$".r
+  override val regex = s"^number:$rationalNumberRegex:$$".r
 
   override def doMatch(min: String, maybeJsValue: Option[JsValue]) =
     maybeJsValue match {
@@ -46,12 +46,12 @@ object LowerBoundedNumberProcessor extends SingleCapturingGroupProcessor {
     }
 }
 
-object UpperBoundedNumber extends SingleCapturingGroupProcessor {
-  override val regex = "^number::(\\d+)$".r
+object UpperBoundedNumberProcessor extends SingleCapturingGroupProcessor {
+  override val regex = s"^number::$rationalNumberRegex$$".r
 
   override def doMatch(max: String, maybeJsValue: Option[JsValue]) =
     maybeJsValue match {
-      case Some(jsNumber: JsNumber) if jsNumber.value <= max.toInt => success
+      case Some(jsNumber: JsNumber) if jsNumber.value <= BigDecimal.exact(max) => success
       case Some(jsNumber: JsNumber) => fail(FailureMessages("numberHighBoundMismatch", jsNumber.value, max))
       case x => fail(FailureMessages("wasNotNumber", x))
     }

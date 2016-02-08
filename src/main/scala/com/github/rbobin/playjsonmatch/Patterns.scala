@@ -19,6 +19,8 @@ case class MatchError(override val processorName: String, message: String) exten
 trait PatternProcessor {
   val regex: Regex
 
+  val rationalNumberRegex = "(-?\\d*\\.{0,1}\\d+)"
+
   def process(patternCandidate: String, maybeJsValue: Option[JsValue]): MatchAttempt
 
   val processorName = this.getClass.getSimpleName
