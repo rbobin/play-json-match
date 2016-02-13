@@ -1,5 +1,6 @@
 package com.github.rbobin.playjsonmatch.processors
 
+import com.github.rbobin.playjsonmatch.utils.MalformedJsPatternException
 import play.api.libs.json._
 
 import scala.util.Random
@@ -86,3 +87,59 @@ class SizedObjectProcessorSpec extends ProcessorSpec {
     )
   }
 }
+
+class BoundedObjectProcessorSpec extends ProcessorSpec {
+
+  override val processor = BoundedObjectProcessor
+
+  "match" should "be skipped with irrelevant patterns" in {
+    val maybeJsValue = Some(JsNull)
+
+    assertAllMatchSkip(
+      (null, maybeJsValue),
+      ("", maybeJsValue),
+      ("a", maybeJsValue),
+      ("object", maybeJsValue),
+      ("object::", maybeJsValue),
+      ("object:x:2", maybeJsValue),
+      ("object:1.5:1.1", maybeJsValue),
+      ("object:-1:3", maybeJsValue)
+    )
+  }
+
+  it should "succeed with relevant pattern and JsObject of correct size" in {
+    assertAllMatchSuccess(
+      ("object:0:0", Some(JsObject(Seq()))),
+      ("object:5:10", Some(JsObject(Seq.fill(5)((Random.nextInt().toString, JsNull))))),
+      ("object:5:10", Some(JsObject(Seq.fill(7)((Random.nextInt().toString, JsNull))))),
+      ("object:5:10", Some(JsObject(Seq.fill(10)((Random.nextInt().toString, JsNull)))))
+    )
+  }
+
+  it should "fail with relevant pattern and not JsObject" in {
+    assertAllMatchError(
+      ("object:0:0", None),
+      ("object:1:2", Some(JsNull)),
+      ("object:1000000:0", Some(JsBoolean(false))),
+      ("object:9999:10000", Some(JsNumber(0))),
+      ("object:2:5", Some(JsArray(Seq()))),
+      ("object:10:12", Some(JsString("")))
+    )
+  }
+
+  it should "fail with relevant pattern and JsObject of wrong size" in {
+    assertAllMatchError(
+      ("object:0:0", Some(JsObject(Seq((".", JsNumber(9)))))),
+      ("object:1:10", Some(JsObject(Seq()))),
+      ("object:5:10", Some(JsObject(Seq.fill(4)((Random.nextInt().toString, JsNull))))),
+      ("object:5:10", Some(JsObject(Seq.fill(11)((Random.nextInt().toString, JsNull)))))
+    )
+  }
+
+  it should "throw an exception if min length is greater than max length" in {
+    a[MalformedJsPatternException] should be thrownBy process("object:1:0", Some(JsObject(Seq())))
+    a[MalformedJsPatternException] should be thrownBy process("object:1000:500", Some(JsObject(Seq())))
+  }
+}
+
+
