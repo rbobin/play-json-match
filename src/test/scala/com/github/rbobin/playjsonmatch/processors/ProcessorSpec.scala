@@ -11,7 +11,6 @@ trait ProcessorSpec extends UnitSpec{
 
   def process(s: String, o: Option[JsValue]) = processor.process(s, o)
 
-
   def assertAllMatchSkip(pairs: (String, Option[JsValue])*) = pairs.foreach { pair =>
     process(pair._1, pair._2) shouldBe MatchSkip
   }
