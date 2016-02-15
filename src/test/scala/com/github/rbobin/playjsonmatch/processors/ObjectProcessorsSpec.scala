@@ -192,3 +192,52 @@ class LowerBoundedObjectProcessorSpec extends ProcessorSpec {
     )
   }
 }
+
+class UpperBoundedObjectProcessorSpec extends ProcessorSpec {
+
+  override val processor = UpperBoundedObjectProcessor
+
+  "match" should "be skipped with irrelevant patterns" in {
+    val maybeJsValue = Some(JsNull)
+
+    assertAllMatchSkip(
+      (null, maybeJsValue),
+      ("", maybeJsValue),
+      ("a", maybeJsValue),
+      ("object", maybeJsValue),
+      ("object::", maybeJsValue),
+      ("object::-3", maybeJsValue),
+      ("object::1.5", maybeJsValue),
+      ("object:5", maybeJsValue)
+    )
+  }
+
+  it should "succeed with relevant pattern and JsObject of correct size" in {
+    assertAllMatchSuccess(
+      ("object::0", Some(JsObject(Seq()))),
+      ("object::1", Some(JsObject(Seq(("z", JsNumber(9)))))),
+      ("object::0", Some(JsObject(Seq()))),
+      ("object::5", Some(JsObject(Seq.fill(5)((Random.nextInt().toString, JsNull))))),
+      ("object::5", Some(JsObject(Seq.fill(3)((Random.nextInt().toString, JsNull)))))
+    )
+  }
+
+  it should "fail with relevant pattern and not JsObject" in {
+    assertAllMatchError(
+      ("object::0", None),
+      ("object::5", Some(JsNull)),
+      ("object::0", Some(JsBoolean(false))),
+      ("object::100", Some(JsNumber(0))),
+      (s"object::${Int.MaxValue}", Some(JsArray(Seq()))),
+      ("object::10", Some(JsString("")))
+    )
+  }
+
+  it should "fail with relevant pattern and JsObject of wrong size" in {
+    assertAllMatchError(
+      ("object::0", Some(JsObject(Seq(("z", JsNumber(9)))))),
+      ("object::6", Some(JsObject(Seq.fill(7)((Random.nextInt().toString, JsNull))))),
+      ("object::15", Some(JsObject(Seq.fill(20)((Random.nextInt().toString, JsNull)))))
+    )
+  }
+}

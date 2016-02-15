@@ -57,7 +57,7 @@ object LowerBoundedObjectProcessor extends SingleCapturingGroupProcessor {
     }
 }
 
-object UpperBoundedProcessor extends SingleCapturingGroupProcessor {
+object UpperBoundedObjectProcessor extends SingleCapturingGroupProcessor {
   override val regex = "^object::(\\d+)$".r
 
   override def doMatch(maxSize: String, maybeJsValue: Option[JsValue]) =
