@@ -1,6 +1,6 @@
 package com.github.rbobin.playjsonmatch.processors
 
-import com.github.rbobin.playjsonmatch.utils.MalformedJsPatternException
+import com.github.rbobin.playjsonmatch.utils.MalformedJsonPatternException
 import play.api.libs.json._
 
 class SimpleNumberProcessorSpec extends ProcessorSpec {
@@ -105,8 +105,8 @@ class NumberInRangeProcessorSpec extends ProcessorSpec {
   }
 
   it should "throw an exception if min is greater than max" in {
-    a[MalformedJsPatternException] should be thrownBy process("number:1:0", Some(JsNumber(0)))
-    a[MalformedJsPatternException] should be thrownBy process("number:-1000:-1000.0001", Some(JsNumber(0)))
+    a[MalformedJsonPatternException] should be thrownBy process("number:1:0", Some(JsNumber(0)))
+    a[MalformedJsonPatternException] should be thrownBy process("number:-1000:-1000.0001", Some(JsNumber(0)))
   }
 }
 

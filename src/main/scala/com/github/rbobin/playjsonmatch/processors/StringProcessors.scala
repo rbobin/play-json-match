@@ -1,7 +1,7 @@
 package com.github.rbobin.playjsonmatch.processors
 
 import com.github.rbobin.playjsonmatch.FailureMessages
-import com.github.rbobin.playjsonmatch.utils.MalformedJsPatternException
+import com.github.rbobin.playjsonmatch.utils.MalformedJsonPatternException
 import play.api.libs.json.{JsString, JsValue}
 
 object SimpleStringProcessor extends SimpleProcessor {
@@ -37,7 +37,7 @@ object BoundedStringProcessor extends TwoCapturingGroupsProcessor {
 
   private def validateStringLength(jsString: JsString, minLength: Int, maxLength: Int): Boolean = {
     if (minLength > maxLength)
-      throw new MalformedJsPatternException(FailureMessages("minLengthGreaterThanMaxLength", minLength, maxLength))
+      throw new MalformedJsonPatternException(FailureMessages("minLengthGreaterThanMaxLength", minLength, maxLength))
 
     val stringLength = jsString.value.length
     stringLength >= minLength && stringLength <= maxLength

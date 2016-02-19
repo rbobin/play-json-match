@@ -1,7 +1,7 @@
 package com.github.rbobin.playjsonmatch
 
 import com.github.rbobin.playjsonmatch.processors.{NullProcessor, BooleanProcessor, MissingValueProcessor, AnyValueProcessor}
-import com.github.rbobin.playjsonmatch.utils.{MultipleMatchException, MalformedJsPatternException, StringUtils}
+import com.github.rbobin.playjsonmatch.utils.{MultipleMatchException, MalformedJsonPatternException, StringUtils}
 import play.api.libs.json.JsValue
 import Errors._
 import StringUtils._
@@ -52,20 +52,20 @@ private[playjsonmatch] object Matcher {
       case e: MultipleMatchException =>
         val newMessage = s"${e.message} at ${prettifyPath(path)}"
         throw new MultipleMatchException(newMessage)
-      case e: MalformedJsPatternException =>
+      case e: MalformedJsonPatternException =>
         val newMessage = s"${e.message} at ${prettifyPath(path)}"
-        throw new MalformedJsPatternException(newMessage)
+        throw new MalformedJsonPatternException(newMessage)
     }
 
   private def splitJsPatterns(jsPatterns: String): List[String] =
     jsPatterns.split(splitCharacter).toList match {
-      case Nil => throw new MalformedJsPatternException("No patterns found")
+      case Nil => throw new MalformedJsonPatternException("No patterns found")
       case x => x
     }
 
   private def verifyNotEmpty(jsPattern: String): String =
     jsPattern match {
-      case `emptyString` => throw new MalformedJsPatternException("Empty pattern")
+      case `emptyString` => throw new MalformedJsonPatternException("Empty pattern")
       case x => x
     }
 
@@ -83,7 +83,7 @@ private[playjsonmatch] object Matcher {
 
   private def filterSkipped(pattern: String, results: Seq[MatchAttempt]): MatchResult =
     results.filterNot(_ == MatchSkip) match {
-      case Nil => throw new MalformedJsPatternException(s"Pattern [ $pattern ] doesn't match anything")
+      case Nil => throw new MalformedJsonPatternException(s"Pattern [ $pattern ] doesn't match anything")
       case (x: MatchResult) :: Nil => x
       case x: Seq[MatchResult] =>
         throw new MultipleMatchException(s"Multiple matches for single pattern [ $pattern ]: ${x.map(_.processorName).mkString(",")}")
