@@ -105,8 +105,10 @@ class NumberInRangeProcessorSpec extends ProcessorSpec {
   }
 
   it should "throw an exception if min is greater than max" in {
-    a[MalformedJsonPatternException] should be thrownBy process("number:1:0", Some(JsNumber(0)))
-    a[MalformedJsonPatternException] should be thrownBy process("number:-1000:-1000.0001", Some(JsNumber(0)))
+    assertExceptionsThrown[MalformedJsonPatternException](
+      ("number:1:0", Some(JsNumber(0))),
+      ("number:-1000:-1000.0001", Some(JsNumber(0)))
+    )
   }
 }
 

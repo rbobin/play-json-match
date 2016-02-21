@@ -1,6 +1,6 @@
 package com.github.rbobin.playjsonmatch.processors
 
-import com.github.rbobin.playjsonmatch.{MatchError, MatchSkip, MatchSuccess}
+import com.github.rbobin.playjsonmatch.MatchError
 import play.api.libs.json._
 
 class AnyValueProcessorSpec extends ProcessorSpec {
@@ -10,21 +10,25 @@ class AnyValueProcessorSpec extends ProcessorSpec {
   "match" should "be skipped with irrelevant patterns" in {
     val maybeJsValue = Some(JsNull)
 
-    process(null, maybeJsValue) shouldBe MatchSkip
-    process("", maybeJsValue)   shouldBe MatchSkip
-    process(".", maybeJsValue)  shouldBe MatchSkip
-    process("**", maybeJsValue) shouldBe MatchSkip
+    assertAllMatchSkip(
+      (null, maybeJsValue),
+      ("", maybeJsValue),
+      (".", maybeJsValue),
+      ("**", maybeJsValue)
+    )
   }
 
   it should "succeed with relevant pattern and any value" in {
-    process(regexString, Some(JsNull))          shouldBe a [MatchSuccess]
-    process(regexString, Some(JsString("")))    shouldBe a [MatchSuccess]
-    process(regexString, Some(JsNumber(1)))     shouldBe a [MatchSuccess]
-    process(regexString, Some(JsArray(Seq())))  shouldBe a [MatchSuccess]
-    process(regexString, Some(JsObject(Seq()))) shouldBe a [MatchSuccess]
+    assertAllMatchSuccess(
+      (regexString, Some(JsNull)),
+      (regexString, Some(JsString(""))),
+      (regexString, Some(JsNumber(1))),
+      (regexString, Some(JsArray(Seq()))),
+      (regexString, Some(JsObject(Seq())))
+    )
   }
 
   it should "fail with relevant pattern and None" in {
-    process(regexString, None) shouldBe a [MatchError]
+    process(regexString, None) shouldBe a[MatchError]
   }
 }

@@ -62,7 +62,9 @@ class RegexProcessorSpec extends ProcessorSpec {
   }
 
   it should "throw an exception if the regex is not valid" in {
-    a[MalformedJsonPatternException] should be thrownBy process("/\\x/", Some(JsString("")))
-    a[MalformedJsonPatternException] should be thrownBy process("/)()(/", Some(JsString("")))
+    assertExceptionsThrown[MalformedJsonPatternException](
+      ("/\\x/", Some(JsString(""))),
+      ("/)()(/", Some(JsString("")))
+    )
   }
 }

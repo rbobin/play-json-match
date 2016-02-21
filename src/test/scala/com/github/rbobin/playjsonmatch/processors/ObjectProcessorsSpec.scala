@@ -137,8 +137,10 @@ class BoundedObjectProcessorSpec extends ProcessorSpec {
   }
 
   it should "throw an exception if min length is greater than max length" in {
-    a[MalformedJsonPatternException] should be thrownBy process("object:1:0", Some(JsObject(Seq())))
-    a[MalformedJsonPatternException] should be thrownBy process("object:1000:500", Some(JsObject(Seq())))
+    assertExceptionsThrown[MalformedJsonPatternException](
+      ("object:1:0", Some(JsObject(Seq()))),
+      ("object:1000:500", Some(JsObject(Seq())))
+    )
   }
 }
 

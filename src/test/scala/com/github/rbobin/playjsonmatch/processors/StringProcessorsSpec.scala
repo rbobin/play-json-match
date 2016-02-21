@@ -139,8 +139,10 @@ class BoundedStringProcessorSpec extends ProcessorSpec {
   }
 
   it should "throw an exception if min length is greater than max length" in {
-    a[MalformedJsonPatternException] should be thrownBy process("string:1:0", Some(JsString("1")))
-    a[MalformedJsonPatternException] should be thrownBy process("string:1000:500", Some(JsString("")))
+    assertExceptionsThrown[MalformedJsonPatternException](
+      ("string:1:0", Some(JsString("1"))),
+      ("string:1000:500", Some(JsString("")))
+    )
   }
 }
 
