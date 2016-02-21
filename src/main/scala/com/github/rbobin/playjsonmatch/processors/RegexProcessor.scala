@@ -28,6 +28,6 @@ object RegexProcessor extends SingleCapturingGroupProcessor {
       regexString.r
     } catch {
       case e: PatternSyntaxException =>
-        throw new MalformedJsonPatternException(FailureMessages("patternSyntaxError", e.getMessage))
+        throw new MalformedJsonPatternException(FailureMessages("regexSyntaxError", e.getMessage))
     }
 }
