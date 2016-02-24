@@ -50,22 +50,20 @@ private[playjsonmatch] object Matcher {
       }
     } catch {
       case e: MultipleMatchException =>
-        val newMessage = s"${e.message} at ${prettifyPath(path)}"
-        throw new MultipleMatchException(newMessage)
+        throw new MultipleMatchException(FailureMessages("errorAtPath", e.message, prettifyPath(path)))
       case e: MalformedJsonPatternException =>
-        val newMessage = s"${e.message} at ${prettifyPath(path)}"
-        throw new MalformedJsonPatternException(newMessage)
+        throw new MalformedJsonPatternException(FailureMessages("errorAtPath", e.message, prettifyPath(path)))
     }
 
   private def splitJsPatterns(jsPatterns: String): List[String] =
     jsPatterns.split(splitCharacter).toList match {
-      case Nil => throw new MalformedJsonPatternException("No patterns found")
+      case Nil => throw new MalformedJsonPatternException(FailureMessages("noPatterns"))
       case x => x
     }
 
   private def verifyNotEmpty(jsPattern: String): String =
     jsPattern match {
-      case `emptyString` => throw new MalformedJsonPatternException("Empty pattern")
+      case `emptyString` => throw new MalformedJsonPatternException(FailureMessages("emptyPattern"))
       case x => x
     }
 
@@ -83,9 +81,9 @@ private[playjsonmatch] object Matcher {
 
   private def filterSkipped(pattern: String, results: Seq[MatchAttempt]): MatchResult =
     results.filterNot(_ == MatchSkip) match {
-      case Nil => throw new MalformedJsonPatternException(s"Pattern [ $pattern ] doesn't match anything")
+      case Nil => throw new MalformedJsonPatternException(FailureMessages("noMatch", pattern))
       case (x: MatchResult) :: Nil => x
       case x: Seq[MatchResult] =>
-        throw new MultipleMatchException(s"Multiple matches for single pattern [ $pattern ]: ${x.map(_.processorName).mkString(",")}")
+        throw new MultipleMatchException(FailureMessages("multipleMatch", pattern, x.map(_.processorName).mkString(",")))
     }
 }
