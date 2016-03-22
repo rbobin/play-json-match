@@ -24,8 +24,8 @@ trait PatternProcessor {
   def process(patternCandidate: String, maybeJsValue: Option[JsValue]): MatchAttempt
 
   val processorName = this.getClass.getSimpleName
-  def fail(message: String) = MatchError(processorName, message)
-  def success = MatchSuccess(processorName)
+  def fail(matchedPattern: String, message: String) = MatchError(processorName, message)
+  def success(matchedPattern: String) = MatchSuccess(processorName)
   def skip = MatchSkip
 }
 
@@ -34,23 +34,25 @@ private[playjsonmatch] object Matcher {
     NullProcessor)
   val splitCharacter = '|'
   val emptyString = ""
-  val emptyErrors = Left(Nil)
-
-  type ErrorsOrSuccess = Either[List[MatchError], Unit]
 
   def processPatterns(patterns: String, maybeJsValue: Option[JsValue], path: JsPath): Errors =
     try {
       splitJsPatterns(patterns)
         .map(verifyNotEmpty)
-        .map(processPattern(_, maybeJsValue))
-        .foldLeft[ErrorsOrSuccess](emptyErrors)(mergeMatchResults)
+        .flatMap(processPattern(_, maybeJsValue))
+        .flatMap {
+          case x: MatchResult => Some(x)
+          case _ => None
+        }
       match {
-        case Left(errors) => matchErrors(errors, maybeJsValue, path)
-        case Right(_) => NO_ERRORS
+        case Nil => throw new MalformedJsonPatternException(FailureMessages("noMatch"))
+        case (x: MatchSuccess) :: Nil => NO_ERRORS
+        case (x: MatchError) :: Nil => matchErrors(Seq(x), maybeJsValue, path)
+        case xs: Seq[MatchResult] => throw new MultipleMatchException(FailureMessages("multipleMatch", patterns, xs.map(_.processorName).mkString(", ")))
       }
     } catch {
       case e: MultipleMatchException =>
-        throw new MultipleMatchException(FailureMessages("errorAtPath", e.message, prettifyPath(path)))
+        throw new MultipleMatchException(FailureMessages("errorAtPath",  prettifyPath(path), e.message))
       case e: MalformedJsonPatternException =>
         throw new MalformedJsonPatternException(FailureMessages("errorAtPath", e.message, prettifyPath(path)))
     }
@@ -67,23 +69,6 @@ private[playjsonmatch] object Matcher {
       case x => x
     }
 
-  private def mergeMatchResults(errorsEitherSuccess: ErrorsOrSuccess, matchResult: MatchResult): ErrorsOrSuccess =
-    errorsEitherSuccess match {
-      case Left(errors) => matchResult match {
-        case _: MatchSuccess => Right()
-        case error: MatchError => Left(error :: errors)
-      }
-      case Right(_) => Right()
-    }
-
-  private def processPattern(pattern: String, maybeJsValue: Option[JsValue]): MatchResult =
-    filterSkipped(pattern, defaultProcessors.map(processor => processor.process(pattern, maybeJsValue)))
-
-  private def filterSkipped(pattern: String, results: Seq[MatchAttempt]): MatchResult =
-    results.filterNot(_ == MatchSkip) match {
-      case Nil => throw new MalformedJsonPatternException(FailureMessages("noMatch", pattern))
-      case (x: MatchResult) :: Nil => x
-      case x: Seq[MatchResult] =>
-        throw new MultipleMatchException(FailureMessages("multipleMatch", pattern, x.map(_.processorName).mkString(",")))
-    }
+  private def processPattern(pattern: String, maybeJsValue: Option[JsValue]): Seq[MatchAttempt] =
+    defaultProcessors.map(processor => processor.process(pattern, maybeJsValue))
 }
