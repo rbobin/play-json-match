@@ -1,7 +1,7 @@
 package com.github.rbobin.playjsonmatch.processors
 
 import com.github.rbobin.playjsonmatch.FailureMessages
-import com.github.rbobin.playjsonmatch.utils.MalformedJsonPatternException
+import com.github.rbobin.playjsonmatch.utils.JsMatchException
 import play.api.libs.json.{JsObject, JsValue}
 
 object SimpleObjectProcessor extends SimpleProcessor {
@@ -38,7 +38,7 @@ object BoundedObjectProcessor extends TwoCapturingGroupsProcessor {
 
   private def validateObjectSize(jsObject: JsObject, minSize: Int, maxSize: Int) = {
     if (minSize > maxSize)
-      throw new MalformedJsonPatternException(FailureMessages("minSizeGreaterThanMaxSize", minSize, maxSize))
+      throw new JsMatchException(FailureMessages("minSizeGreaterThanMaxSize", minSize, maxSize))
 
     val objectSize = jsObject.values.size
     objectSize >= minSize && objectSize <= maxSize

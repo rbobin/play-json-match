@@ -1,6 +1,6 @@
 package com.github.rbobin.playjsonmatch.processors
 
-import com.github.rbobin.playjsonmatch.utils.MalformedJsonPatternException
+import com.github.rbobin.playjsonmatch.utils.JsMatchException
 import play.api.libs.json._
 
 class RegexProcessorSpec extends ProcessorSpec {
@@ -62,7 +62,7 @@ class RegexProcessorSpec extends ProcessorSpec {
   }
 
   it should "throw an exception if the regex is not valid" in {
-    assertExceptionsThrown[MalformedJsonPatternException](
+    assertExceptionsThrown[JsMatchException](
       ("/\\x/", Some(JsString(""))),
       ("/)()(/", Some(JsString("")))
     )

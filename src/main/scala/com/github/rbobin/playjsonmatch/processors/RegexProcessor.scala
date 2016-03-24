@@ -3,7 +3,7 @@ package com.github.rbobin.playjsonmatch.processors
 import java.util.regex.PatternSyntaxException
 
 import com.github.rbobin.playjsonmatch.FailureMessages
-import com.github.rbobin.playjsonmatch.utils.MalformedJsonPatternException
+import com.github.rbobin.playjsonmatch.utils.JsMatchException
 import play.api.libs.json.{JsString, JsValue}
 
 import scala.util.matching.Regex
@@ -28,6 +28,6 @@ object RegexProcessor extends SingleCapturingGroupProcessor {
       regexString.r
     } catch {
       case e: PatternSyntaxException =>
-        throw new MalformedJsonPatternException(FailureMessages("regexSyntaxError", e.getMessage))
+        throw new JsMatchException(FailureMessages("regexSyntaxError", e.getMessage))
     }
 }

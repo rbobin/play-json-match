@@ -1,10 +1,10 @@
 package com.github.rbobin.playjsonmatch
 
-import com.github.rbobin.playjsonmatch.processors.{NullProcessor, BooleanProcessor, MissingValueProcessor, AnyValueProcessor}
-import com.github.rbobin.playjsonmatch.utils.{MultipleMatchException, MalformedJsonPatternException, StringUtils}
+import com.github.rbobin.playjsonmatch.Errors._
+import com.github.rbobin.playjsonmatch.processors.{AnyValueProcessor, BooleanProcessor, MissingValueProcessor, NullProcessor}
+import com.github.rbobin.playjsonmatch.utils.StringUtils._
+import com.github.rbobin.playjsonmatch.utils.{JsMatchException, StringUtils}
 import play.api.libs.json.JsValue
-import Errors._
-import StringUtils._
 
 import scala.util.matching.Regex
 
@@ -44,16 +44,14 @@ private[playjsonmatch] object Matcher {
           case _ => None
         }
       match {
-        case Nil => throw new MalformedJsonPatternException(FailureMessages("noMatch"))
+        case Nil => throw new JsMatchException(FailureMessages("noMatch"))
         case (x: MatchSuccess) :: Nil => NO_ERRORS
         case (x: MatchError) :: Nil => matchErrors(Seq(x), maybeJsValue, path)
-        case xs: Seq[MatchResult] => throw new MultipleMatchException(FailureMessages("multipleMatch", patterns, xs.map(_.processorName).mkString(", ")))
+        case xs: Seq[MatchResult] => throw new JsMatchException(FailureMessages("multipleMatch", patterns, xs.map(_.processorName).mkString(", ")))
       }
     } catch {
-      case e: MultipleMatchException =>
-        throw new MultipleMatchException(FailureMessages("errorAtPath",  prettifyPath(path), e.message))
-      case e: MalformedJsonPatternException =>
-        throw new MalformedJsonPatternException(FailureMessages("errorAtPath", e.message, prettifyPath(path)))
+      case e: JsMatchException =>
+        throw new JsMatchException(FailureMessages("errorAtPath", e.message, prettifyPath(path)))
     }
 
   private def splitPatterns(patterns: String): List[String] =
@@ -61,7 +59,7 @@ private[playjsonmatch] object Matcher {
       .toList
       .filterNot(_.isEmpty)
     match {
-      case Nil => throw new MalformedJsonPatternException(FailureMessages("noPatterns"))
+      case Nil => throw new JsMatchException(FailureMessages("noPatterns"))
       case x => x
     }
 

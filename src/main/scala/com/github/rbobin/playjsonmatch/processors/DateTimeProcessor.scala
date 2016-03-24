@@ -4,7 +4,7 @@ import java.time.format.{DateTimeFormatter, DateTimeParseException}
 import java.time.{LocalDate, ZonedDateTime}
 
 import com.github.rbobin.playjsonmatch.FailureMessages
-import com.github.rbobin.playjsonmatch.utils.MalformedJsonPatternException
+import com.github.rbobin.playjsonmatch.utils.JsMatchException
 import play.api.libs.json.{JsString, JsValue}
 
 object DateTimeProcessor extends SingleCapturingGroupProcessor {
@@ -30,7 +30,7 @@ object DateTimeProcessor extends SingleCapturingGroupProcessor {
       DateTimeFormatter.ofPattern(formatString)
     } catch {
       case e: IllegalArgumentException =>
-        throw new MalformedJsonPatternException(FailureMessages("datetimeFormatSyntaxError", formatString))
+        throw new JsMatchException(FailureMessages("datetimeFormatSyntaxError", formatString))
     }
 
   private def verifyLocalDateFormat(formatter: DateTimeFormatter, dateString: String): Boolean =

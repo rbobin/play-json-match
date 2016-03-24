@@ -1,6 +1,6 @@
 package com.github.rbobin.playjsonmatch
 
-import com.github.rbobin.playjsonmatch.utils.MalformedJsonPatternException
+import com.github.rbobin.playjsonmatch.utils.JsMatchException
 
 class PatternsSpec extends UnitSpec {
 
@@ -25,9 +25,9 @@ class PatternsSpec extends UnitSpec {
   it should "return throw an exception when split is empty" in {
     val splitPatterns = PrivateMethod[List[String]]('splitPatterns)
 
-    a[MalformedJsonPatternException] should be thrownBy Matcher.invokePrivate(splitPatterns(""))
-    a[MalformedJsonPatternException] should be thrownBy Matcher.invokePrivate(splitPatterns("|"))
-    a[MalformedJsonPatternException] should be thrownBy Matcher.invokePrivate(splitPatterns("|||"))
+    a[JsMatchException] should be thrownBy Matcher.invokePrivate(splitPatterns(""))
+    a[JsMatchException] should be thrownBy Matcher.invokePrivate(splitPatterns("|"))
+    a[JsMatchException] should be thrownBy Matcher.invokePrivate(splitPatterns("|||"))
   }
 
   "verifyNotEmpty" should "return the same string "

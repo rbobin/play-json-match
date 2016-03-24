@@ -1,7 +1,7 @@
 package com.github.rbobin.playjsonmatch.processors
 
 import com.github.rbobin.playjsonmatch.FailureMessages
-import com.github.rbobin.playjsonmatch.utils.MalformedJsonPatternException
+import com.github.rbobin.playjsonmatch.utils.JsMatchException
 import play.api.libs.json.{JsNumber, JsValue}
 
 object SimpleNumberProcessor extends SimpleProcessor {
@@ -28,7 +28,7 @@ object NumberInRangeProcessor extends TwoCapturingGroupsProcessor {
     val min = BigDecimal.exact(minString)
     val max = BigDecimal.exact(maxString)
     if (min.>(max))
-      throw new MalformedJsonPatternException(FailureMessages("minValueGreaterThanMaxValue", max, min))
+      throw new JsMatchException(FailureMessages("minValueGreaterThanMaxValue", max, min))
 
     val number = jsNumber.value
     number >= min && number <= max

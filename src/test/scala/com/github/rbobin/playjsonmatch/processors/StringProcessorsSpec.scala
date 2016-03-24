@@ -1,6 +1,6 @@
 package com.github.rbobin.playjsonmatch.processors
 
-import com.github.rbobin.playjsonmatch.utils.MalformedJsonPatternException
+import com.github.rbobin.playjsonmatch.utils.JsMatchException
 import play.api.libs.json._
 
 class SimpleStringProcessorSpec extends ProcessorSpec {
@@ -139,7 +139,7 @@ class BoundedStringProcessorSpec extends ProcessorSpec {
   }
 
   it should "throw an exception if min length is greater than max length" in {
-    assertExceptionsThrown[MalformedJsonPatternException](
+    assertExceptionsThrown[JsMatchException](
       ("string:1:0", Some(JsString("1"))),
       ("string:1000:500", Some(JsString("")))
     )

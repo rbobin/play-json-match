@@ -1,6 +1,6 @@
 package com.github.rbobin.playjsonmatch.processors
 
-import com.github.rbobin.playjsonmatch.utils.MalformedJsonPatternException
+import com.github.rbobin.playjsonmatch.utils.JsMatchException
 import play.api.libs.json._
 
 class DateTimeProcessorSpec extends ProcessorSpec {
@@ -60,7 +60,7 @@ class DateTimeProcessorSpec extends ProcessorSpec {
   }
 
   it should "throw an exception if format is not valid" in {
-    assertExceptionsThrown[MalformedJsonPatternException](
+    assertExceptionsThrown[JsMatchException](
       ("datetime(yyyy-MM-ddTHH:mm:ssXXX)", Some(JsString(""))),
       ("datetime(abcdefg)", Some(JsString("")))
     )
