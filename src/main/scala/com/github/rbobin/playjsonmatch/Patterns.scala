@@ -37,8 +37,7 @@ private[playjsonmatch] object Matcher {
 
   def processPatterns(patterns: String, maybeJsValue: Option[JsValue], path: JsPath): Errors =
     try {
-      splitJsPatterns(patterns)
-        .map(verifyNotEmpty)
+      splitPatterns(patterns)
         .flatMap(processPattern(_, maybeJsValue))
         .flatMap {
           case x: MatchResult => Some(x)
@@ -57,15 +56,12 @@ private[playjsonmatch] object Matcher {
         throw new MalformedJsonPatternException(FailureMessages("errorAtPath", e.message, prettifyPath(path)))
     }
 
-  private def splitJsPatterns(jsPatterns: String): List[String] =
-    jsPatterns.split(splitCharacter).toList match {
+  private def splitPatterns(patterns: String): List[String] =
+    patterns.split(splitCharacter)
+      .toList
+      .filterNot(_.isEmpty)
+    match {
       case Nil => throw new MalformedJsonPatternException(FailureMessages("noPatterns"))
-      case x => x
-    }
-
-  private def verifyNotEmpty(jsPattern: String): String =
-    jsPattern match {
-      case `emptyString` => throw new MalformedJsonPatternException(FailureMessages("emptyPattern"))
       case x => x
     }
 
