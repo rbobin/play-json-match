@@ -24,8 +24,8 @@ trait PatternProcessor {
   def process(patternCandidate: String, maybeJsValue: Option[JsValue]): MatchAttempt
 
   val processorName = this.getClass.getSimpleName
-  def fail(matchedPattern: String, message: String) = MatchError(processorName, message)
-  def success(matchedPattern: String) = MatchSuccess(processorName)
+  def fail(message: String) = MatchError(processorName, message)
+  def success = MatchSuccess(processorName)
   def skip = MatchSkip
 }
 
