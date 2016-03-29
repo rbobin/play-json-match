@@ -1,7 +1,7 @@
 package com.github.rbobin.playjsonmatch
 
 import com.github.rbobin.playjsonmatch.Errors._
-import com.github.rbobin.playjsonmatch.processors.{AnyValueProcessor, BooleanProcessor, MissingValueProcessor, NullProcessor}
+import com.github.rbobin.playjsonmatch.processors._
 import com.github.rbobin.playjsonmatch.utils.StringUtils._
 import com.github.rbobin.playjsonmatch.utils.{JsMatchException, StringUtils}
 import play.api.libs.json.JsValue
@@ -31,7 +31,12 @@ trait PatternProcessor {
 
 private[playjsonmatch] object Matcher {
   val defaultProcessors: Seq[PatternProcessor] = Seq(AnyValueProcessor, MissingValueProcessor, BooleanProcessor,
-    NullProcessor)
+    NullProcessor, RegexProcessor, DateTimeProcessor, BoundedArrayProcessor, LowerBoundedArrayProcessor,
+    SimpleArrayProcessor, SizedArrayProcessor, UpperBoundedArrayProcessor, LowerBoundedNumberProcessor,
+    NumberInRangeProcessor, SimpleNumberProcessor, UpperBoundedNumberProcessor, BoundedObjectProcessor,
+    LowerBoundedObjectProcessor, SimpleObjectProcessor, SizedObjectProcessor, UpperBoundedObjectProcessor,
+    BoundedStringProcessor, LowerBoundedStringProcessor, SimpleStringProcessor, SizedStringProcessor,
+    UpperBoundedStringProcessor)
   val splitCharacter = '|'
   val emptyString = ""
 
