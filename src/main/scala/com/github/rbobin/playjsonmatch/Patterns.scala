@@ -39,20 +39,18 @@ private[playjsonmatch] object Matcher {
     UpperBoundedStringProcessor)
   val splitCharacter = '|'
   val emptyString = ""
+  val emptyErrors = Left(Nil)
+
+  type ErrorsOrSuccess = Either[List[MatchError], Unit]
 
   def processPatterns(patterns: String, maybeJsValue: Option[JsValue], path: JsPath): Errors =
     try {
       splitPatterns(patterns)
-        .flatMap(processPattern(_, maybeJsValue))
-        .flatMap {
-          case x: MatchResult => Some(x)
-          case _ => None
-        }
+        .map(processPattern(_, maybeJsValue))
+        .foldLeft[ErrorsOrSuccess](emptyErrors)(mergeMatchResults)
       match {
-        case Nil => throw new JsMatchException(FailureMessages("noMatch"))
-        case (x: MatchSuccess) :: Nil => NO_ERRORS
-        case (x: MatchError) :: Nil => matchErrors(Seq(x), maybeJsValue, path)
-        case xs: Seq[MatchResult] => throw new JsMatchException(FailureMessages("multipleMatch", patterns, xs.map(_.processorName).mkString(", ")))
+        case Left(errors) => matchErrors(errors, maybeJsValue, path)
+        case Right(_) => NO_ERRORS
       }
     } catch {
       case e: JsMatchException =>
@@ -68,6 +66,23 @@ private[playjsonmatch] object Matcher {
       case x => x
     }
 
-  private def processPattern(pattern: String, maybeJsValue: Option[JsValue]): Seq[MatchAttempt] =
-    defaultProcessors.map(processor => processor.process(pattern, maybeJsValue))
+  private def mergeMatchResults(errorsEitherSuccess: ErrorsOrSuccess, matchResult: MatchResult): ErrorsOrSuccess =
+    errorsEitherSuccess match {
+      case Left(errors) => matchResult match {
+        case _: MatchSuccess => Right()
+        case error: MatchError => Left(error :: errors)
+      }
+      case Right(_) => Right()
+    }
+
+  private def processPattern(pattern: String, maybeJsValue: Option[JsValue]): MatchResult =
+    filterSkipped(pattern, defaultProcessors.map(processor => processor.process(pattern, maybeJsValue)))
+
+  private def filterSkipped(pattern: String, results: Seq[MatchAttempt]): MatchResult =
+    results.filterNot(_ == MatchSkip) match {
+      case Nil => throw new JsMatchException(FailureMessages("noMatch", pattern))
+      case (x: MatchResult) :: Nil => x
+      case x: Seq[MatchResult] =>
+        throw new JsMatchException(FailureMessages("multipleMatch", pattern, x.map(_.processorName).mkString(",")))
+    }
 }
