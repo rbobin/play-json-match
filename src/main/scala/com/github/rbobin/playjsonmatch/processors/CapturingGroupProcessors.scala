@@ -5,9 +5,8 @@ import play.api.libs.json.JsValue
 
 trait SimpleProcessor extends PatternProcessor {
   override final def process(patternCandidate: String, maybeJsValue: Option[JsValue]): MatchAttempt = {
-    val regexString = regex.regex
     patternCandidate match {
-      case `regexString` => doMatch(maybeJsValue)
+      case regex() => doMatch(maybeJsValue)
       case _ => skip
     }
   }
