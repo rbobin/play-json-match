@@ -6,6 +6,7 @@ import play.api.libs.json._
 class SimpleNumberProcessorSpec extends ProcessorSpec {
 
   override val processor = SimpleNumberProcessor
+  val pattern = "number"
 
   "match" should "be skipped with irrelevant patterns" in {
     val maybeJsValue = Some(JsNull)
@@ -20,22 +21,22 @@ class SimpleNumberProcessorSpec extends ProcessorSpec {
 
   it should "succeed with relevant pattern and JsNumber" in {
     assertAllMatchSuccess(
-      (regexString, Some(JsNumber(0))),
-      (regexString, Some(JsNumber(1))),
-      (regexString, Some(JsNumber(-1))),
-      (regexString, Some(JsNumber(BigDecimal(5, 5)))),
-      (regexString, Some(JsNumber(Integer.MIN_VALUE)))
+      (pattern, Some(JsNumber(0))),
+      (pattern, Some(JsNumber(1))),
+      (pattern, Some(JsNumber(-1))),
+      (pattern, Some(JsNumber(BigDecimal(5, 5)))),
+      (pattern, Some(JsNumber(Integer.MIN_VALUE)))
     )
   }
 
   it should "fail with relevant pattern and anything but JsNumber" in {
     assertAllMatchError(
-      (regexString, None),
-      (regexString, Some(JsNull)),
-      (regexString, Some(JsBoolean(false))),
-      (regexString, Some(JsString("!"))),
-      (regexString, Some(JsArray(Seq()))),
-      (regexString, Some(JsObject(Seq())))
+      (pattern, None),
+      (pattern, Some(JsNull)),
+      (pattern, Some(JsBoolean(false))),
+      (pattern, Some(JsString("!"))),
+      (pattern, Some(JsArray(Seq()))),
+      (pattern, Some(JsObject(Seq())))
     )
   }
 }

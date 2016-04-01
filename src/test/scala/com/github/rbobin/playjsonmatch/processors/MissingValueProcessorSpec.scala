@@ -6,6 +6,7 @@ import play.api.libs.json._
 class MissingValueProcessorSpec extends ProcessorSpec {
 
   override val processor = MissingValueProcessor
+  val pattern = "?"
 
   "match" should "be skipped with irrelevant patterns" in {
     val maybeJsValue = Some(JsNull)
@@ -19,16 +20,16 @@ class MissingValueProcessorSpec extends ProcessorSpec {
   }
 
   it should "succeed with relevant pattern and None" in {
-    process(regexString, None) shouldBe a[MatchSuccess]
+    process(pattern, None) shouldBe a[MatchSuccess]
   }
 
   it should "fail with relevant pattern and any value" in {
     assertAllMatchError(
-      (regexString, Some(JsNull)),
-      (regexString, Some(JsString("1"))),
-      (regexString, Some(JsNumber(0))),
-      (regexString, Some(JsArray(Seq()))),
-      (regexString, Some(JsObject(Seq())))
+      (pattern, Some(JsNull)),
+      (pattern, Some(JsString("1"))),
+      (pattern, Some(JsNumber(0))),
+      (pattern, Some(JsArray(Seq()))),
+      (pattern, Some(JsObject(Seq())))
     )
   }
 }

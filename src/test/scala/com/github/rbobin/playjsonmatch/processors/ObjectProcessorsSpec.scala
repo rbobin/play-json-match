@@ -8,6 +8,7 @@ import scala.util.Random
 class SimpleObjectProcessorSpec extends ProcessorSpec {
 
   override val processor = SimpleObjectProcessor
+  val pattern = "object"
 
   "match" should "be skipped with irrelevant patterns" in {
     val maybeJsValue = Some(JsNull)
@@ -22,20 +23,20 @@ class SimpleObjectProcessorSpec extends ProcessorSpec {
 
   it should "succeed with relevant pattern and JsObject" in {
     assertAllMatchSuccess(
-      (regexString, Some(JsObject(Seq()))),
-      (regexString, Some(JsObject(Seq(("field", JsNull))))),
-      (regexString, Some(JsObject(Seq(("1", JsNumber(1)), ("2", JsBoolean(false))))))
+      (pattern, Some(JsObject(Seq()))),
+      (pattern, Some(JsObject(Seq(("field", JsNull))))),
+      (pattern, Some(JsObject(Seq(("1", JsNumber(1)), ("2", JsBoolean(false))))))
     )
   }
 
   it should "fail with relevant pattern and anything but JsObject" in {
     assertAllMatchError(
-      (regexString, None),
-      (regexString, Some(JsNull)),
-      (regexString, Some(JsNumber(1000))),
-      (regexString, Some(JsString("!"))),
-      (regexString, Some(JsBoolean(true))),
-      (regexString, Some(JsArray(Seq())))
+      (pattern, None),
+      (pattern, Some(JsNull)),
+      (pattern, Some(JsNumber(1000))),
+      (pattern, Some(JsString("!"))),
+      (pattern, Some(JsBoolean(true))),
+      (pattern, Some(JsArray(Seq())))
     )
   }
 }

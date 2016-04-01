@@ -6,6 +6,7 @@ import play.api.libs.json._
 class SimpleArrayProcessorSpec extends ProcessorSpec {
 
   override val processor = SimpleArrayProcessor
+  val pattern = "array"
 
   "match" should "be skipped with irrelevant patterns" in {
     val maybeJsValue = Some(JsNull)
@@ -20,20 +21,20 @@ class SimpleArrayProcessorSpec extends ProcessorSpec {
 
   it should "succeed with relevant pattern and JsArray" in {
     assertAllMatchSuccess(
-      (regexString, Some(JsArray())),
-      (regexString, Some(JsArray(Seq(JsBoolean(true))))),
-      (regexString, Some(JsArray(Seq.fill(5)(JsNull))))
+      (pattern, Some(JsArray())),
+      (pattern, Some(JsArray(Seq(JsBoolean(true))))),
+      (pattern, Some(JsArray(Seq.fill(5)(JsNull))))
     )
   }
 
   it should "fail with relevant pattern and anything but JsArray" in {
     assertAllMatchError(
-      (regexString, None),
-      (regexString, Some(JsNull)),
-      (regexString, Some(JsNumber(1000))),
-      (regexString, Some(JsString("!"))),
-      (regexString, Some(JsBoolean(true))),
-      (regexString, Some(JsObject(Seq())))
+      (pattern, None),
+      (pattern, Some(JsNull)),
+      (pattern, Some(JsNumber(1000))),
+      (pattern, Some(JsString("!"))),
+      (pattern, Some(JsBoolean(true))),
+      (pattern, Some(JsObject(Seq())))
     )
   }
 }

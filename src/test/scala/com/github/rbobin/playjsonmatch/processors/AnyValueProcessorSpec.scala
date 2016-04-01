@@ -6,6 +6,7 @@ import play.api.libs.json._
 class AnyValueProcessorSpec extends ProcessorSpec {
 
   override val processor = AnyValueProcessor
+  val pattern = "*"
 
   "match" should "be skipped with irrelevant patterns" in {
     val maybeJsValue = Some(JsNull)
@@ -20,15 +21,15 @@ class AnyValueProcessorSpec extends ProcessorSpec {
 
   it should "succeed with relevant pattern and any value" in {
     assertAllMatchSuccess(
-      (regexString, Some(JsNull)),
-      (regexString, Some(JsString(""))),
-      (regexString, Some(JsNumber(1))),
-      (regexString, Some(JsArray(Seq()))),
-      (regexString, Some(JsObject(Seq())))
+      (pattern, Some(JsNull)),
+      (pattern, Some(JsString(""))),
+      (pattern, Some(JsNumber(1))),
+      (pattern, Some(JsArray(Seq()))),
+      (pattern, Some(JsObject(Seq())))
     )
   }
 
   it should "fail with relevant pattern and None" in {
-    process(regexString, None) shouldBe a[MatchError]
+    process(pattern, None) shouldBe a[MatchError]
   }
 }

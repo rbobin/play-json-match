@@ -6,6 +6,7 @@ import play.api.libs.json._
 class NullProcessorSpec extends ProcessorSpec {
 
   override val processor = NullProcessor
+  val pattern = "null"
 
   "match" should "be skipped with irrelevant patterns" in {
     val maybeJsValue = Some(JsNull)
@@ -19,16 +20,16 @@ class NullProcessorSpec extends ProcessorSpec {
   }
 
   it should "succeed with relevant pattern and Null" in {
-    process(regexString, Some(JsNull)) shouldBe a[MatchSuccess]
+    process(pattern, Some(JsNull)) shouldBe a[MatchSuccess]
   }
 
   it should "fail with relevant pattern and anything but Null" in {
     assertAllMatchError(
-      (regexString, None),
-      (regexString, Some(JsString(""))),
-      (regexString, Some(JsNumber(1))),
-      (regexString, Some(JsArray(Seq()))),
-      (regexString, Some(JsObject(Seq())))
+      (pattern, None),
+      (pattern, Some(JsString(""))),
+      (pattern, Some(JsNumber(1))),
+      (pattern, Some(JsArray(Seq()))),
+      (pattern, Some(JsObject(Seq())))
     )
   }
 }

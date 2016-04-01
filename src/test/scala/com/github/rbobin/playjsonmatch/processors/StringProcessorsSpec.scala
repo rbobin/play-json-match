@@ -6,6 +6,7 @@ import play.api.libs.json._
 class SimpleStringProcessorSpec extends ProcessorSpec {
 
   override val processor = SimpleStringProcessor
+  val pattern = "string"
 
   "match" should "be skipped with irrelevant patterns" in {
     val maybeJsValue = Some(JsNull)
@@ -20,20 +21,20 @@ class SimpleStringProcessorSpec extends ProcessorSpec {
 
   it should "succeed with relevant pattern and JsString" in {
     assertAllMatchSuccess(
-      (regexString, Some(JsString(""))),
-      (regexString, Some(JsString("."))),
-      (regexString, Some(JsString("string")))
+      (pattern, Some(JsString(""))),
+      (pattern, Some(JsString("."))),
+      (pattern, Some(JsString("string")))
     )
   }
 
   it should "fail with relevant pattern and anything but JsString" in {
     assertAllMatchError(
-      (regexString, None),
-      (regexString, Some(JsNull)),
-      (regexString, Some(JsBoolean(false))),
-      (regexString, Some(JsNumber(0))),
-      (regexString, Some(JsArray(Seq()))),
-      (regexString, Some(JsObject(Seq())))
+      (pattern, None),
+      (pattern, Some(JsNull)),
+      (pattern, Some(JsBoolean(false))),
+      (pattern, Some(JsNumber(0))),
+      (pattern, Some(JsArray(Seq()))),
+      (pattern, Some(JsObject(Seq())))
     )
   }
 }
