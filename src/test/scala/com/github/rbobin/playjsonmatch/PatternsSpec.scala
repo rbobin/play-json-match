@@ -1,7 +1,8 @@
 package com.github.rbobin.playjsonmatch
 
+import com.github.rbobin.playjsonmatch.Matcher.ErrorsOrSuccess
 import com.github.rbobin.playjsonmatch.utils.JsMatchException
-import play.api.libs.json.{JsBoolean, JsNull, JsString}
+import play.api.libs.json.{JsBoolean, JsNull, JsNumber, JsString}
 
 class PatternsSpec extends UnitSpec {
 
@@ -31,12 +32,21 @@ class PatternsSpec extends UnitSpec {
     a[JsMatchException] should be thrownBy Matcher.invokePrivate(splitPatterns("|||"))
   }
 
-  val path = Seq()
+  "getMatchResults" should "return Right if at least one match succeeded" in {
+    val getMatchResults = PrivateMethod[ErrorsOrSuccess]('getMatchResults)
 
-  "processPatterns" should "return empty list if match found" in {
-    Matcher.processPatterns("boolean", Some(JsBoolean(false)), path) shouldBe NO_ERRORS
-    Matcher.processPatterns("boolean|null|number", Some(JsNull), path) shouldBe NO_ERRORS
-    Matcher.processPatterns("string:1:5", Some(JsString("123")), path) shouldBe NO_ERRORS
-    Matcher.processPatterns("?|array::20", None, path) shouldBe NO_ERRORS
+    Matcher invokePrivate getMatchResults("boolean", Some(JsBoolean(false))) shouldBe a [Right[_, _]]
+    Matcher invokePrivate getMatchResults("boolean|null|number", Some(JsNull)) shouldBe a [Right[_, _]]
+    Matcher invokePrivate getMatchResults("string:1:5", Some(JsString("123"))) shouldBe a [Right[_, _]]
+    Matcher invokePrivate getMatchResults("?|array::20", None) shouldBe a [Right[_, _]]
+  }
+
+  it should "return Left if all matches failed" in {
+    val getMatchResults = PrivateMethod[ErrorsOrSuccess]('getMatchResults)
+
+    Matcher invokePrivate getMatchResults("string:0:5", Some(JsBoolean(true))) shouldBe a [Left[_, _]]
+    Matcher invokePrivate getMatchResults("object:5:|array", Some(JsNumber(500))) shouldBe a [Left[_, _]]
+    Matcher invokePrivate getMatchResults("boolean|boolean|number", None) shouldBe a [Left[_, _]]
+    Matcher invokePrivate getMatchResults("?", Some(JsBoolean(true))) shouldBe a [Left[_, _]]
   }
 }

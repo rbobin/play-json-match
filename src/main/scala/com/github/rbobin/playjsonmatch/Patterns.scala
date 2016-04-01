@@ -43,12 +43,9 @@ private[playjsonmatch] object Matcher {
 
   type ErrorsOrSuccess = Either[List[MatchError], Unit]
 
-  def processPatterns(patterns: String, maybeJsValue: Option[JsValue], path: JsPath): Errors =
+  def processPatterns(patternsString: String, maybeJsValue: Option[JsValue], path: JsPath): Errors =
     try {
-      splitPatterns(patterns)
-        .map(processPattern(_, maybeJsValue))
-        .foldLeft[ErrorsOrSuccess](emptyErrors)(mergeMatchResults)
-      match {
+      getMatchResults(patternsString, maybeJsValue) match {
         case Left(errors) => matchErrors(errors, maybeJsValue, path)
         case Right(_) => NO_ERRORS
       }
@@ -56,6 +53,11 @@ private[playjsonmatch] object Matcher {
       case e: JsMatchException =>
         throw new JsMatchException(FailureMessages("errorAtPath", e.message, prettifyPath(path)))
     }
+
+  private def getMatchResults(patternString: String, maybeJsValue: Option[JsValue]): ErrorsOrSuccess =
+    splitPatterns(patternString)
+      .map(processPattern(_, maybeJsValue))
+      .foldLeft[ErrorsOrSuccess](emptyErrors)(mergeMatchResults)
 
   private def splitPatterns(patterns: String): List[String] =
     patterns.split(splitCharacter)
