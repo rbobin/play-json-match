@@ -49,4 +49,23 @@ class PatternsSpec extends UnitSpec {
     Matcher invokePrivate getMatchResults("boolean|boolean|number", None) shouldBe a [Left[_, _]]
     Matcher invokePrivate getMatchResults("?", Some(JsBoolean(true))) shouldBe a [Left[_, _]]
   }
+
+  "mergeMatchResults" should "return Right if the first argument is Right" in {
+    val mergeMatchResults = PrivateMethod[ErrorsOrSuccess]('mergeMatchResults)
+
+    Matcher invokePrivate mergeMatchResults(Right(), MatchSuccess("")) shouldBe a [Right[_, _]]
+    Matcher invokePrivate mergeMatchResults(Right(), MatchError("", "")) shouldBe a [Right[_, _]]
+  }
+
+  it should "return return Right if the first argument is Left and the second argument is MatchSuccess" in {
+    val mergeMatchResults = PrivateMethod[ErrorsOrSuccess]('mergeMatchResults)
+
+    Matcher invokePrivate mergeMatchResults(Left(Seq(MatchError("",""))), MatchSuccess("")) shouldBe a [Right[_, _]]
+  }
+
+  it should "return return Left if the first argument is Left and the second argument is MatchError" in {
+    val mergeMatchResults = PrivateMethod[ErrorsOrSuccess]('mergeMatchResults)
+
+    Matcher invokePrivate mergeMatchResults(Left(Seq(MatchError("",""))), MatchError("", "")) shouldBe a [Left[_, _]]
+  }
 }
