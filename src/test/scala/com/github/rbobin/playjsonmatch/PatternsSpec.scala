@@ -68,4 +68,31 @@ class PatternsSpec extends UnitSpec {
 
     Matcher invokePrivate mergeMatchResults(Left(Seq(MatchError("",""))), MatchError("", "")) shouldBe a [Left[_, _]]
   }
+
+  "filterSkipped" should "return MatchResult if other results are MatchSkip" in {
+    val filterSkipped = PrivateMethod[MatchResult]('filterSkipped)
+
+    Matcher invokePrivate filterSkipped("", Seq(MatchError("", ""))) shouldBe a [MatchError]
+    Matcher invokePrivate filterSkipped("", Seq(MatchSkip, MatchError("", ""))) shouldBe a [MatchError]
+    Matcher invokePrivate filterSkipped("", Seq(MatchError("", ""), MatchSkip, MatchSkip)) shouldBe a [MatchError]
+
+    Matcher invokePrivate filterSkipped("", Seq(MatchSuccess(""))) shouldBe a [MatchSuccess]
+    Matcher invokePrivate filterSkipped("", Seq(MatchSkip, MatchSuccess(""), MatchSkip)) shouldBe a [MatchSuccess]
+  }
+
+  it should "throw an exception if no results have no MatchResults" in {
+    val filterSkipped = PrivateMethod[MatchResult]('filterSkipped)
+
+    a[JsMatchException] should be thrownBy Matcher.invokePrivate(filterSkipped("", Seq()))
+    a[JsMatchException] should be thrownBy Matcher.invokePrivate(filterSkipped("", Seq(MatchSkip)))
+    a[JsMatchException] should be thrownBy Matcher.invokePrivate(filterSkipped("", Seq(MatchSkip, MatchSkip)))
+  }
+
+  it should "throw an exception if results have more than one MatchResult" in {
+    val filterSkipped = PrivateMethod[MatchResult]('filterSkipped)
+
+    a[JsMatchException] should be thrownBy Matcher.invokePrivate(filterSkipped("", Seq(MatchError("",""), MatchError("", ""))))
+    a[JsMatchException] should be thrownBy Matcher.invokePrivate(filterSkipped("", Seq(MatchSkip, MatchError("", ""), MatchSuccess(""))))
+    a[JsMatchException] should be thrownBy Matcher.invokePrivate(filterSkipped("", Seq(MatchSuccess(""), MatchError("", ""), MatchSkip, MatchSuccess(""))))
+  }
 }
